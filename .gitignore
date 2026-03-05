@@ -1,0 +1,8 @@
+# LONGSHOT - gitignore
+node_modules/
+.env
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

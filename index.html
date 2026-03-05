@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LONGSHOT — Antigravity Trading Quest</title>
+    <meta name="description" content="바이낸스 선물 100배 레버리지 안티그래비티 트레이딩 게임">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <canvas id="bgCanvas"></canvas>
+
+    <!-- ===== SCREEN 1: MODE SELECT ===== -->
+    <div id="screenSelect" class="screen active">
+        <div class="select-container">
+            <div class="logo-area">
+                <div class="logo-icon">🚀</div>
+                <h1 class="logo-title">LONGSHOT</h1>
+                <p class="logo-subtitle">ANTIGRAVITY TRADING QUEST</p>
+            </div>
+            <div class="live-ticker">
+                <div class="ticker-dot"></div>
+                <span class="ticker-label">BTC/USDT</span>
+                <span class="ticker-price" id="tickerPrice">연결 중...</span>
+                <span class="ticker-change" id="tickerChange"></span>
+            </div>
+            <!-- Play Mode -->
+            <div class="play-mode-toggle">
+                <button class="toggle-btn active" data-play="practice" id="btnPractice">🎮 연습</button>
+                <button class="toggle-btn" data-play="live" id="btnLive">⚡ 실전</button>
+            </div>
+            <div class="api-config" id="apiConfig">
+                <div class="api-status" id="apiStatus"></div>
+                <input type="text" id="apiKey" placeholder="Binance API Key" autocomplete="off">
+                <input type="password" id="apiSecret" placeholder="Binance API Secret" autocomplete="off">
+                <div class="api-btns">
+                    <button class="api-save-btn" id="btnSaveApi">🔐 브라우저에 저장</button>
+                    <button class="api-del-btn" id="btnDelApi">🗑️ 삭제</button>
+                </div>
+                <div class="api-warn">⚠️ 실전 모드는 실제 자금이 사용됩니다</div>
+                <div class="api-note">🔒 API 키는 이 브라우저의 localStorage에만 저장됩니다.<br>서버로 전송되지 않으며, 코드에 포함되지 않습니다.</div>
+            </div>
+            <div class="seed-area">
+                <label>시드 금액</label>
+                <div class="seed-wrap"><span>₩</span><input type="number" id="seedInput" value="10000" min="1000"></div>
+            </div>
+            <div class="mode-cards">
+                <div class="mode-card" data-mode="EASY">
+                    <div class="mc-badge easy">EASY</div>
+                    <div class="mc-stages">3<small>STAGES</small></div>
+                    <div class="mc-mult easy">×8</div>
+                    <div class="mc-desc">짧은 호흡의 입문용</div>
+                    <div class="mc-expect" id="easyExp">₩80,000</div>
+                </div>
+                <div class="mode-card" data-mode="NORMAL">
+                    <div class="mc-badge normal">NORMAL</div>
+                    <div class="mc-stages">5<small>STAGES</small></div>
+                    <div class="mc-mult normal">×32</div>
+                    <div class="mc-desc">트레이딩 중급자</div>
+                    <div class="mc-expect" id="normalExp">₩320,000</div>
+                </div>
+                <div class="mode-card" data-mode="LEGEND">
+                    <div class="mc-badge legend">LEGEND</div>
+                    <div class="mc-stages">10<small>STAGES</small></div>
+                    <div class="mc-mult legend">×1,024</div>
+                    <div class="mc-desc">0.1% 극한 도전</div>
+                    <div class="mc-expect" id="legendExp">₩10,240,000</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SCREEN 2: DIRECTION PLAN (모든 단계 롱/숏 선택) ===== -->
+    <div id="screenPlan" class="screen">
+        <div class="plan-container">
+            <div class="plan-header">
+                <h2 class="plan-title">전략을 세우세요</h2>
+                <p class="plan-sub">각 단계의 포지션 방향을 선택하세요</p>
+                <div class="plan-info">
+                    <span class="plan-mode" id="planMode">EASY MODE</span>
+                    <span class="plan-seed" id="planSeed">시드: ₩10,000</span>
+                </div>
+            </div>
+            <div class="plan-price-bar">
+                <span class="live-dot"></span>
+                <span>BTC/USDT</span>
+                <span class="plan-price" id="planPrice">$0.00</span>
+                <span class="plan-change" id="planChange"></span>
+            </div>
+            <div class="plan-slots" id="planSlots">
+                <!-- JS generates stage slots -->
+            </div>
+            <button class="btn-go" id="btnGo" disabled>
+                <span id="btnGoText">모든 단계를 선택하세요</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== SCREEN 3: GAME PLAY (게임 비주얼) ===== -->
+    <div id="screenGame" class="screen">
+        <div class="game-hud">
+            <div class="hud-row">
+                <div class="hud-cell">
+                    <div class="hud-label" id="hudMode">EASY</div>
+                    <div class="hud-big" id="hudStage">STAGE 1/3</div>
+                </div>
+                <div class="hud-cell center">
+                    <div class="hud-label"><span class="live-dot"></span> BTC/USDT</div>
+                    <div class="hud-price" id="hudPrice">$0.00</div>
+                </div>
+                <div class="hud-cell right">
+                    <div class="hud-label">자산</div>
+                    <div class="hud-balance" id="hudBalance">₩10,000</div>
+                </div>
+            </div>
+            <div class="stage-bar">
+                <div class="stage-fill" id="stageFill"></div>
+            </div>
+            <div class="stage-dots" id="stageDots"></div>
+        </div>
+
+        <!-- 게임 비주얼 영역 -->
+        <div class="game-visual" id="gameVisual">
+            <canvas id="gameCanvas"></canvas>
+            <!-- 중앙 로켓/캐릭터 -->
+            <div class="rocket-zone" id="rocketZone">
+                <div class="rocket" id="rocket">🚀</div>
+            </div>
+            <!-- PnL 대형 표시 -->
+            <div class="pnl-display" id="pnlDisplay">
+                <div class="pnl-direction" id="pnlDirection">LONG</div>
+                <div class="pnl-amount" id="pnlAmount">₩0</div>
+                <div class="pnl-percent" id="pnlPercent">0.000%</div>
+            </div>
+            <!-- TP/SL Progress -->
+            <div class="tpsl-bar">
+                <div class="tpsl-zone sl">
+                    <span>SL -0.9%</span>
+                    <div class="tpsl-track sl">
+                        <div class="tpsl-fill sl" id="slFill"></div>
+                    </div>
+                </div>
+                <div class="tpsl-center">
+                    <span id="tpslEntry">진입가</span>
+                </div>
+                <div class="tpsl-zone tp">
+                    <span>TP +1.1%</span>
+                    <div class="tpsl-track tp">
+                        <div class="tpsl-fill tp" id="tpFill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stage Result -->
+        <div class="stage-result" id="stageResult">
+            <div class="sr-content">
+                <div class="sr-icon" id="srIcon">🚀</div>
+                <h2 class="sr-title" id="srTitle">STAGE CLEAR!</h2>
+                <p class="sr-profit" id="srProfit">+₩10,000</p>
+                <p class="sr-next" id="srNext">다음 단계...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SCREEN 4: GAME OVER ===== -->
+    <div id="screenOver" class="screen">
+        <div class="over-container">
+            <div class="blackhole">
+                <div class="bh-ring"></div>
+                <div class="bh-ring"></div>
+                <div class="bh-core"></div>
+            </div>
+            <h1 class="over-title">GAME OVER</h1>
+            <div class="over-stats">
+                <div class="os"><span class="os-l">도달</span><span class="os-v" id="goStage">1/3</span></div>
+                <div class="os"><span class="os-l">손실</span><span class="os-v loss" id="goLoss">-₩10,000</span></div>
+            </div>
+            <button class="btn-retry" id="btnRetry">다시 도전</button>
+        </div>
+    </div>
+
+    <!-- ===== SCREEN 5: VICTORY ===== -->
+    <div id="screenWin" class="screen">
+        <canvas id="confettiCanvas"></canvas>
+        <div class="win-container">
+            <div class="win-star">⭐</div>
+            <h1 class="win-title" id="winTitle">QUEST COMPLETE!</h1>
+            <p class="win-mode" id="winMode">EASY MODE</p>
+            <div class="win-stats">
+                <div class="ws"><span class="ws-l">최종 자산</span><span class="ws-v" id="winBalance">₩80,000</span></div>
+                <div class="ws"><span class="ws-l">수익률</span><span class="ws-v profit" id="winReturn">+700%</span></div>
+                <div class="ws"><span class="ws-l">배율</span><span class="ws-v" id="winMult">×8</span></div>
+            </div>
+            <button class="btn-retry win" id="btnAgain">새 게임</button>
+        </div>
+    </div>
+
+    <!-- Legend Overlay -->
+    <div id="legendOverlay" class="legend-ov">
+        <canvas id="legendCanvas"></canvas>
+        <div class="legend-cnt">
+            <div class="legend-crown">👑</div>
+            <h1 class="legend-t">LEGENDARY</h1>
+            <p class="legend-s">0.1%의 확률을 뚫었습니다!</p>
+            <div class="legend-amt" id="legendAmt">₩10,240,000</div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
