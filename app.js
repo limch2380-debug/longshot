@@ -370,6 +370,7 @@ class TopMover {
         CFG.TP = (100 / maxLev);
         CFG.SL = (100 / maxLev);
         this.updateUI(coin, maxLev);
+        if (window.game && window.game.bigRoad) window.game.bigRoad.setThreshold(100 / maxLev);
         // Save selection (v2 to avoid cached bad coins)
         try { localStorage.setItem('longshot_topmover_v2', JSON.stringify({ symbol: coin.symbol, coinName: GS.currentCoinName, maxLev, selectedAt: GS.coinSelectedAt, change: coin.priceChangePercent })); } catch (e) { }
         return coin;
@@ -388,6 +389,7 @@ class TopMover {
                     CFG.LEV = d.maxLev;
                     CFG.TP = (100 / d.maxLev);
                     CFG.SL = (100 / d.maxLev);
+                    if (window.game && window.game.bigRoad) window.game.bigRoad.setThreshold(100 / d.maxLev);
                     return true;
                 }
             }
@@ -440,6 +442,11 @@ class BigRoad {
         this.bindEvents();
         this.fetchHistory();
     }
+    setThreshold(val) {
+        this.threshold = parseFloat(val);
+        console.log('📊 Baccarat Threshold Set:', this.threshold.toFixed(2) + '%');
+        if (this.refPrice > 0) this.updateRefUI(this.refPrice);
+    }
     bindEvents() {
         const btn = $('btnBacToggle');
         if (btn) btn.addEventListener('click', () => this.toggle());
@@ -487,9 +494,11 @@ class BigRoad {
     }
     updateRefUI(price) {
         const f = '$' + price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const up = price * (1 + this.threshold / 100);
+        const dn = price * (1 - this.threshold / 100);
         $('bacRefPrice').textContent = f;
-        $('bacNextUp').textContent = '$' + (price * 1.01).toFixed(2);
-        $('bacNextDown').textContent = '$' + (price * 0.99).toFixed(2);
+        $('bacNextUp').textContent = '$' + up.toFixed(2);
+        $('bacNextDown').textContent = '$' + dn.toFixed(2);
         const mr = $('miniRefPlan'); if (mr) mr.textContent = '기준 ' + f;
     }
     renderAll() {

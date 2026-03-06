@@ -658,7 +658,7 @@ body {
     left: 0;
     right: 0;
     z-index: 20;
-    padding: 24px 32px 0
+    padding: 16px 20px 0
 }
 
 .hud-row {
@@ -845,9 +845,9 @@ body {
 
 .tpsl-bar {
     position: absolute;
-    bottom: 40px;
-    left: 40px;
-    right: 40px;
+    bottom: 120px;
+    left: 20px;
+    right: 20px;
     z-index: 2;
     display: flex;
     align-items: center;
@@ -2583,4 +2583,40 @@ a.bac-toggle {
 .top-mover-change {
     color: var(--green);
     font-weight: 700
+}
+
+/* ====================================================
+   MOBILE RESPONSIVE TWEAKS 📱
+   ==================================================== */
+@media (max-width: 600px) {
+    .hud-big {
+        font-size: 16px;
+    }
+
+    .hud-label {
+        font-size: 9px;
+    }
+
+    .hud-price {
+        font-size: 14px;
+    }
+
+    .bet-amount {
+        font-size: 32px;
+    }
+
+    .bet-lev-badge {
+        font-size: 14px;
+        padding: 3px 6px;
+    }
+
+    .pnl-amount {
+        font-size: 40px;
+    }
+
+    .mini-road-section.game-mini {
+        bottom: 12px;
+        left: 12px;
+        right: 12px;
+    }
 }
