@@ -323,11 +323,20 @@ class TopMover {
     }
     async findTopMover() {
         try {
+            // Get active TRADING symbols first
+            const infoRes = await fetch('https://fapi.binance.com/fapi/v1/exchangeInfo');
+            const info = await infoRes.json();
+            const activeSymbols = new Set(
+                info.symbols.filter(s => s.status === 'TRADING' && s.contractType === 'PERPETUAL').map(s => s.symbol)
+            );
+
+            // Get 24h ticker
             const res = await fetch('https://fapi.binance.com/fapi/v1/ticker/24hr');
             const tickers = await res.json();
-            // USDT 페어만, 유동성 있는 코인
+
+            // Filter only active USDT pairs with volume
             const usdt = tickers
-                .filter(t => t.symbol.endsWith('USDT') && parseFloat(t.quoteVolume) > 10000000)
+                .filter(t => t.symbol.endsWith('USDT') && activeSymbols.has(t.symbol) && parseFloat(t.quoteVolume) > 10000000)
                 .sort((a, b) => Math.abs(parseFloat(b.priceChangePercent)) - Math.abs(parseFloat(a.priceChangePercent)));
             if (usdt.length > 0) {
                 this.coinData = usdt[0];
@@ -361,13 +370,13 @@ class TopMover {
         CFG.TP = (100 / maxLev);
         CFG.SL = (100 / maxLev);
         this.updateUI(coin, maxLev);
-        // Save selection
-        try { localStorage.setItem('longshot_topmover', JSON.stringify({ symbol: coin.symbol, coinName: GS.currentCoinName, maxLev, selectedAt: GS.coinSelectedAt, change: coin.priceChangePercent })); } catch (e) { }
+        // Save selection (v2 to avoid cached bad coins)
+        try { localStorage.setItem('longshot_topmover_v2', JSON.stringify({ symbol: coin.symbol, coinName: GS.currentCoinName, maxLev, selectedAt: GS.coinSelectedAt, change: coin.priceChangePercent })); } catch (e) { }
         return coin;
     }
     loadSaved() {
         try {
-            const saved = localStorage.getItem('longshot_topmover');
+            const saved = localStorage.getItem('longshot_topmover_v2');
             if (saved) {
                 const d = JSON.parse(saved);
                 const elapsed = Date.now() - d.selectedAt;
