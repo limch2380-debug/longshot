@@ -926,7 +926,10 @@ class Game {
         }
     }
 
-    updateBalance() { $('hudBalance').textContent = '₩' + Math.round(GS.balance).toLocaleString(); }
+    updateBalance() {
+        $('hudBalance').textContent = '₩' + Math.round(GS.balance).toLocaleString();
+        if ($('hudBetLev')) $('hudBetLev').textContent = 'x' + GS.maxLeverage;
+    }
 
     // -- STAGE --
     async nextStage() {
