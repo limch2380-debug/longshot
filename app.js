@@ -305,6 +305,278 @@ class LegendFX {
 }
 
 // ============================================================
+// BACCARAT BIG ROAD (1% 기준 변동 추적)
+// ============================================================
+class BigRoad {
+    constructor() {
+        this.refPrice = 0;          // 기준 가격 (Pref)
+        this.threshold = 1.0;       // 1% 변동 기준
+        this.history = [];          // [{dir:'LONG'|'SHORT', price, refPrice, time}]
+        this.maxRows = 6;           // 빅 로드 세로 최대
+        this.maxCols = 40;          // 가로 최대
+        this.gridContainer = $('bacRoad');
+        this.isOpen = false;
+
+        // localStorage에서 기존 기록 로드
+        this.load();
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        $('btnBacToggle').addEventListener('click', () => this.toggle());
+        $('btnBacClose').addEventListener('click', () => this.close());
+        $('bacPanel').addEventListener('click', (e) => {
+            if (e.target === $('bacPanel')) this.close();
+        });
+    }
+
+    toggle() { this.isOpen ? this.close() : this.open(); }
+    open() { this.isOpen = true; $('bacPanel').classList.add('active'); this.render(); }
+    close() { this.isOpen = false; $('bacPanel').classList.remove('active'); }
+
+    // 가격 업데이트 (WebSocket에서 호출)
+    onPrice(price) {
+        // 기준가 초기화 (첫 가격)
+        if (this.refPrice === 0) {
+            this.refPrice = price;
+            this.updateRefUI(price);
+            return;
+        }
+
+        // 변동률 체크
+        const changePercent = ((price - this.refPrice) / this.refPrice) * 100;
+
+        if (changePercent >= this.threshold) {
+            // +1% → LONG (초록)
+            this.addDot('LONG', price);
+        } else if (changePercent <= -this.threshold) {
+            // -1% → SHORT (빨강)
+            this.addDot('SHORT', price);
+        }
+
+        // Bac panel live price
+        if (this.isOpen) {
+            $('bacPrice').textContent = '$' + price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    }
+
+    addDot(dir, price) {
+        this.history.push({
+            dir, price, refPrice: this.refPrice,
+            time: Date.now()
+        });
+
+        // 새 기준가 갱신
+        this.refPrice = price;
+        this.updateRefUI(price);
+
+        // 최대 기록 제한
+        if (this.history.length > this.maxCols * this.maxRows) {
+            this.history = this.history.slice(-this.maxCols * this.maxRows);
+        }
+
+        this.save();
+        if (this.isOpen) this.render();
+        this.updateStats();
+        this.updatePrediction();
+    }
+
+    updateRefUI(price) {
+        $('bacRefPrice').textContent = '$' + price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const up = price * (1 + this.threshold / 100);
+        const down = price * (1 - this.threshold / 100);
+        $('bacNextUp').textContent = '$' + up.toFixed(2);
+        $('bacNextDown').textContent = '$' + down.toFixed(2);
+    }
+
+    // 빅 로드 그리드 렌더링 (바카라 규칙)
+    render() {
+        if (!this.gridContainer) return;
+
+        // 바카라 빅 로드 레이아웃 계산
+        // columns[c] = [{dir, price, ...}, ...]
+        const columns = [];
+        let currentCol = [];
+        let prevDir = null;
+
+        for (const entry of this.history) {
+            if (prevDir === null || entry.dir === prevDir) {
+                // 같은 방향 → 세로 누적
+                currentCol.push(entry);
+                // 드래곤 테일: 6줄 초과 시 새 열
+                if (currentCol.length > this.maxRows) {
+                    columns.push(currentCol.slice(0, this.maxRows));
+                    currentCol = currentCol.slice(this.maxRows);
+                }
+            } else {
+                // 방향 전환 → 새 열
+                if (currentCol.length > 0) columns.push(currentCol);
+                currentCol = [entry];
+            }
+            prevDir = entry.dir;
+        }
+        if (currentCol.length > 0) columns.push(currentCol);
+
+        // 표시할 열 제한 (최근 것만)
+        const visibleCols = columns.slice(-this.maxCols);
+
+        // HTML 생성 (CSS Grid: row-first, column-auto)
+        this.gridContainer.innerHTML = '';
+
+        if (visibleCols.length === 0) {
+            // 빈 그리드 표시
+            for (let c = 0; c < 12; c++) {
+                for (let r = 0; r < this.maxRows; r++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'bac-cell empty';
+                    this.gridContainer.appendChild(cell);
+                }
+            }
+            return;
+        }
+
+        const totalCols = Math.max(visibleCols.length, 12);
+
+        for (let c = 0; c < totalCols; c++) {
+            const colData = visibleCols[c] || [];
+            for (let r = 0; r < this.maxRows; r++) {
+                const cell = document.createElement('div');
+                if (r < colData.length) {
+                    const entry = colData[r];
+                    cell.className = 'bac-cell ' + entry.dir.toLowerCase();
+                    cell.textContent = entry.dir === 'LONG' ? 'L' : 'S';
+                    // 마지막 dot에 latest 클래스
+                    if (c === visibleCols.length - 1 && r === colData.length - 1) {
+                        cell.classList.add('latest');
+                    }
+                } else {
+                    cell.className = 'bac-cell empty';
+                }
+                this.gridContainer.appendChild(cell);
+            }
+        }
+
+        // 스크롤 최우측
+        const wrap = this.gridContainer.parentElement;
+        if (wrap) wrap.scrollLeft = wrap.scrollWidth;
+    }
+
+    updateStats() {
+        const total = this.history.length;
+        if (total === 0) return;
+
+        const longCount = this.history.filter(h => h.dir === 'LONG').length;
+        const shortCount = total - longCount;
+        const longPct = ((longCount / total) * 100).toFixed(0);
+        const shortPct = ((shortCount / total) * 100).toFixed(0);
+
+        $('bacLongCount').textContent = longCount;
+        $('bacLongPct').textContent = longPct + '%';
+        $('bacShortCount').textContent = shortCount;
+        $('bacShortPct').textContent = shortPct + '%';
+        $('bacBarLong').style.width = longPct + '%';
+        $('bacBarShort').style.width = shortPct + '%';
+
+        // 현재 연속 계산
+        let streak = 1;
+        const lastDir = this.history[total - 1].dir;
+        for (let i = total - 2; i >= 0; i--) {
+            if (this.history[i].dir === lastDir) streak++;
+            else break;
+        }
+        const sv = $('bacStreakVal');
+        sv.textContent = `${lastDir} ×${streak}`;
+        sv.style.color = lastDir === 'LONG' ? 'var(--green)' : 'var(--red)';
+    }
+
+    updatePrediction() {
+        const total = this.history.length;
+        if (total < 3) {
+            $('bacPredictIcon').textContent = '⏳';
+            $('bacPredictTitle').textContent = '데이터 수집 중...';
+            $('bacPredictTitle').className = 'bac-predict-title neutral';
+            $('bacPredictDesc').textContent = `${3 - total}개 더 필요합니다`;
+            return;
+        }
+
+        // 최근 10개 기준 추세 분석
+        const recent = this.history.slice(-10);
+        const longR = recent.filter(h => h.dir === 'LONG').length;
+        const shortR = recent.length - longR;
+
+        // 현재 연속
+        let streak = 1;
+        const lastDir = this.history[total - 1].dir;
+        for (let i = total - 2; i >= 0; i--) {
+            if (this.history[i].dir === lastDir) streak++;
+            else break;
+        }
+
+        const pt = $('bacPredictTitle');
+        const pd = $('bacPredictDesc');
+        const pi = $('bacPredictIcon');
+
+        if (streak >= 5) {
+            // 강한 추세
+            if (lastDir === 'LONG') {
+                pi.textContent = '🔥'; pt.textContent = '강한 상승 추세!';
+                pt.className = 'bac-predict-title long';
+                pd.textContent = `LONG ${streak}연속 · 추세 지속 가능성 높음`;
+            } else {
+                pi.textContent = '🧊'; pt.textContent = '강한 하락 추세!';
+                pt.className = 'bac-predict-title short';
+                pd.textContent = `SHORT ${streak}연속 · 추세 지속 가능성 높음`;
+            }
+        } else if (streak >= 3) {
+            if (lastDir === 'LONG') {
+                pi.textContent = '📈'; pt.textContent = '상승 추세 진행 중';
+                pt.className = 'bac-predict-title long';
+                pd.textContent = `LONG ${streak}연속 · 최근 10개 LONG ${longR}:SHORT ${shortR}`;
+            } else {
+                pi.textContent = '📉'; pt.textContent = '하락 추세 진행 중';
+                pt.className = 'bac-predict-title short';
+                pd.textContent = `SHORT ${streak}연속 · 최근 10개 LONG ${longR}:SHORT ${shortR}`;
+            }
+        } else if (longR >= 7) {
+            pi.textContent = '📈'; pt.textContent = '상승 우세 구간';
+            pt.className = 'bac-predict-title long';
+            pd.textContent = `최근 10개 중 LONG ${longR}개 (${(longR / recent.length * 100).toFixed(0)}%)`;
+        } else if (shortR >= 7) {
+            pi.textContent = '📉'; pt.textContent = '하락 우세 구간';
+            pt.className = 'bac-predict-title short';
+            pd.textContent = `최근 10개 중 SHORT ${shortR}개 (${(shortR / recent.length * 100).toFixed(0)}%)`;
+        } else {
+            // 혼조
+            pi.textContent = '🔄'; pt.textContent = '혼조 · 방향 탐색 중';
+            pt.className = 'bac-predict-title neutral';
+            pd.textContent = `최근 10개 LONG ${longR}:SHORT ${shortR} · 패턴 대기`;
+        }
+    }
+
+    save() {
+        try {
+            // 최근 200개만 저장
+            const data = { refPrice: this.refPrice, history: this.history.slice(-200) };
+            localStorage.setItem('longshot_bigroad', JSON.stringify(data));
+        } catch (e) { }
+    }
+
+    load() {
+        try {
+            const raw = localStorage.getItem('longshot_bigroad');
+            if (raw) {
+                const data = JSON.parse(raw);
+                this.refPrice = data.refPrice || 0;
+                this.history = data.history || [];
+                this.updateStats();
+                this.updatePrediction();
+                if (this.refPrice > 0) this.updateRefUI(this.refPrice);
+            }
+        } catch (e) { }
+    }
+}
+
+// ============================================================
 // MAIN GAME
 // ============================================================
 class Game {
@@ -316,6 +588,7 @@ class Game {
         this.sfx = new SFX();
         this.feed = new PriceFeed();
         this.futures = new BinanceFutures();
+        this.bigRoad = new BigRoad();
 
         this.grav = -0.3;
         this.priceCheckInterval = null;
@@ -330,6 +603,9 @@ class Game {
 
     // -- PRICE --
     onPrice(d) {
+        // BigRoad 바카라 추적
+        this.bigRoad.onPrice(d.price);
+
         // Ticker
         $('tickerPrice').textContent = '$' + d.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const ce = $('tickerChange');

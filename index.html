@@ -203,6 +203,79 @@
         </div>
     </div>
 
+    <!-- Baccarat Road Toggle Button (메인 화면 우상단) -->
+    <button class="bac-toggle" id="btnBacToggle" title="바카라 로드맵">🎰</button>
+
+    <!-- ===== BACCARAT BIG ROAD PANEL ===== -->
+    <div id="bacPanel" class="bac-panel">
+        <div class="bac-glass">
+            <!-- Header -->
+            <div class="bac-header">
+                <div class="bac-header-left">
+                    <span class="bac-logo">🎰</span>
+                    <h2 class="bac-title">BTC ROAD MAP</h2>
+                    <span class="bac-sub">바카라 빅 로드 · 1% 기준</span>
+                </div>
+                <div class="bac-header-right">
+                    <div class="bac-live">
+                        <span class="live-dot"></span>
+                        <span class="bac-price" id="bacPrice">$0.00</span>
+                    </div>
+                    <button class="bac-close" id="btnBacClose">✕</button>
+                </div>
+            </div>
+
+            <!-- Reference Price -->
+            <div class="bac-ref">
+                <span class="bac-ref-label">기준가</span>
+                <span class="bac-ref-price" id="bacRefPrice">$0.00</span>
+                <span class="bac-ref-info">다음 ↑<span id="bacNextUp">$0</span> · ↓<span id="bacNextDown">$0</span></span>
+            </div>
+
+            <!-- Main Grid (Big Road) -->
+            <div class="bac-road-wrap">
+                <div class="bac-road" id="bacRoad">
+                    <!-- Grid rendered by JS -->
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="bac-stats">
+                <div class="bac-stat long-stat">
+                    <div class="bac-stat-dot long"></div>
+                    <span class="bac-stat-label">LONG</span>
+                    <span class="bac-stat-val" id="bacLongCount">0</span>
+                    <span class="bac-stat-pct" id="bacLongPct">0%</span>
+                </div>
+                <div class="bac-stat-bar">
+                    <div class="bac-bar-fill long" id="bacBarLong" style="width:50%"></div>
+                    <div class="bac-bar-fill short" id="bacBarShort" style="width:50%"></div>
+                </div>
+                <div class="bac-stat short-stat">
+                    <div class="bac-stat-dot short"></div>
+                    <span class="bac-stat-label">SHORT</span>
+                    <span class="bac-stat-val" id="bacShortCount">0</span>
+                    <span class="bac-stat-pct" id="bacShortPct">0%</span>
+                </div>
+            </div>
+
+            <!-- Prediction -->
+            <div class="bac-predict" id="bacPredict">
+                <div class="bac-predict-icon" id="bacPredictIcon">⏳</div>
+                <div class="bac-predict-text">
+                    <span class="bac-predict-title" id="bacPredictTitle">분석 대기 중...</span>
+                    <span class="bac-predict-desc" id="bacPredictDesc">가격 변동을 기다리고 있습니다</span>
+                </div>
+            </div>
+
+            <!-- Streak Info -->
+            <div class="bac-streak" id="bacStreak">
+                <span class="bac-streak-label">현재 연속</span>
+                <span class="bac-streak-val" id="bacStreakVal">—</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Legend Overlay -->
     <div id="legendOverlay" class="legend-ov">
         <canvas id="legendCanvas"></canvas>
