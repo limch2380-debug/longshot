@@ -17,8 +17,30 @@
 <body>
     <canvas id="bgCanvas"></canvas>
 
+    <!-- ===== SCREEN 0: LOGIN ===== -->
+    <div id="screenLogin" class="screen active">
+        <div class="login-container">
+            <div class="logo-area">
+                <div class="logo-icon">🔑</div>
+                <h1 class="logo-title">TERMINAL ACCESS</h1>
+                <p class="login-sub">데이터는 브라우저 로컬 저장소에 안전하게 보관됩니다.</p>
+            </div>
+            <div class="login-form">
+                <div class="login-field">
+                    <label>ACCESS ID</label>
+                    <input type="text" id="loginId" class="login-input" placeholder="아이디 입력" autocomplete="off">
+                </div>
+                <div class="login-field">
+                    <label>KEY CODE</label>
+                    <input type="password" id="loginPw" class="login-input" placeholder="비밀번호 입력" autocomplete="off">
+                </div>
+                <button class="login-btn" id="btnLogin">시스템 접속</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ===== SCREEN 1: MODE SELECT ===== -->
-    <div id="screenSelect" class="screen active">
+    <div id="screenSelect" class="screen">
         <div class="select-container">
             <div class="logo-area">
                 <div class="logo-icon">🚀</div>

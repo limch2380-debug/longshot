@@ -21,6 +21,105 @@
     --rl: 24px;
 }
 
+/* ====================================================
+   LOGIN SCREEN
+   ==================================================== */
+.login-container {
+    max-width: 400px;
+    width: 90%;
+    padding: 40px;
+    background: rgba(14, 14, 40, .75);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(100, 100, 180, .18);
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
+    text-align: center;
+    position: relative;
+    z-index: 10;
+}
+
+.login-title {
+    font-family: var(--fn);
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, var(--gold), #fff, var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+}
+
+.login-sub {
+    font-size: 14px;
+    color: var(--text2);
+    margin-bottom: 32px;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.login-field {
+    text-align: left;
+}
+
+.login-field label {
+    display: block;
+    font-size: 10px;
+    font-family: var(--fn);
+    letter-spacing: 2px;
+    color: var(--dim);
+    margin-bottom: 6px;
+    margin-left: 12px;
+}
+
+.login-input {
+    width: 100%;
+    background: rgba(0, 0, 0, .2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 20px;
+    color: #fff;
+    font-family: var(--fm);
+    font-size: 16px;
+    outline: none;
+    transition: all .3s;
+    box-sizing: border-box;
+}
+
+.login-input:focus {
+    border-color: var(--gold);
+    background: rgba(255, 215, 0, .05);
+    box-shadow: 0 0 20px rgba(255, 215, 0, .1);
+}
+
+.login-btn {
+    width: 100%;
+    margin-top: 12px;
+    padding: 16px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(135deg, var(--gold), #f90);
+    color: #000;
+    font-family: var(--fn);
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all .3s;
+}
+
+.login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 165, 0, .4);
+}
+
+.login-btn:active {
+    transform: translateY(0);
+}
+
 *,
 *::before,
 *::after {

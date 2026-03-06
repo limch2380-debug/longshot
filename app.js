@@ -5,10 +5,11 @@
  */
 
 const GS = {
+    currentUser: null,
     mode: null, playMode: 'practice', totalStages: 0, currentStage: 0, rtRound: 0, rtDirection: null, rtMode: false,
     seed: 10000, balance: 10000, isRunning: false,
     btcPrice: 0, prevPrice: 0, open24h: 0, change24h: 0,
-    plan: [],        // ['LONG','SHORT','LONG'] — 사전 선택된 방향 배열
+    plan: [],
     direction: null, entryPrice: 0, tpPrice: 0, slPrice: 0,
     wsConnected: false,
     binanceOrderId: null,
@@ -27,7 +28,64 @@ const CFG = {
 };
 
 const $ = id => document.getElementById(id);
-const screens = { select: $('screenSelect'), plan: $('screenPlan'), game: $('screenGame'), over: $('screenOver'), win: $('screenWin'), realtime: $('screenRealtime') };
+const screens = {
+    login: $('screenLogin'),
+    select: $('screenSelect'),
+    plan: $('screenPlan'),
+    game: $('screenGame'),
+    over: $('screenOver'),
+    win: $('screenWin'),
+    realtime: $('screenRealtime')
+};
+
+// ============================================================
+// AUTH & PERSISTENCE
+// ============================================================
+class Auth {
+    constructor() {
+        this.users = this.loadUsers();
+    }
+    loadUsers() {
+        try {
+            const data = localStorage.getItem('longshot_users');
+            return data ? JSON.parse(data) : {};
+        } catch (e) { return {}; }
+    }
+    saveUsers() {
+        localStorage.setItem('longshot_users', JSON.stringify(this.users));
+    }
+    login(id, pw) {
+        if (!id || !pw) return { success: false, msg: '아이디와 비밀번호를 입력하세요.' };
+        if (this.users[id]) {
+            if (this.users[id].pw === pw) return { success: true, user: this.users[id] };
+            return { success: false, msg: '비밀번호가 일치하지 않습니다.' };
+        } else {
+            // Create new user
+            const newUser = { id, pw, state: { balance: 10000, seed: 10000, currentStage: 0, mode: null } };
+            this.users[id] = newUser;
+            this.saveUsers();
+            return { success: true, user: newUser };
+        }
+    }
+    saveState(id, gs) {
+        if (!this.users[id]) return;
+        this.users[id].state = {
+            balance: gs.balance,
+            seed: gs.seed,
+            currentStage: gs.currentStage,
+            totalStages: gs.totalStages,
+            mode: gs.mode,
+            playMode: gs.playMode,
+            plan: gs.plan,
+            rtRound: gs.rtRound,
+            isRunning: gs.isRunning,
+            currentSymbol: gs.currentSymbol,
+            currentCoinName: gs.currentCoinName,
+            maxLeverage: gs.maxLeverage
+        };
+        this.saveUsers();
+    }
+}
 
 // ============================================================
 // BINANCE WEBSOCKET
@@ -581,6 +639,7 @@ class BigRoad {
 // ============================================================
 class Game {
     constructor() {
+        this.auth = new Auth();
         this.bg = new BGCanvas($('bgCanvas'));
         this.gameVis = new GameVisualCanvas($('gameCanvas'));
         this.confetti = new Confetti($('confettiCanvas'));
@@ -629,6 +688,66 @@ class Game {
         this.bindEvents();
         this.updateSeeds();
         this.loop();
+    }
+
+    // -- AUTH FLOW --
+    handleLogin() {
+        const id = $('loginId').value.trim();
+        const pw = $('loginPw').value.trim();
+        const res = this.auth.login(id, pw);
+        if (res.success) {
+            GS.currentUser = id;
+            // Restore state
+            const s = res.user.state;
+            if (s) {
+                GS.balance = s.balance || 10000;
+                GS.seed = s.seed || 10000;
+                GS.currentStage = s.currentStage || 0;
+                GS.totalStages = s.totalStages || 0;
+                GS.mode = s.mode;
+                GS.playMode = s.playMode || 'practice';
+                GS.plan = s.plan || [];
+                GS.rtRound = s.rtRound || 0;
+                GS.isRunning = s.isRunning || false;
+                if (s.currentSymbol) {
+                    GS.currentSymbol = s.currentSymbol;
+                    GS.currentCoinName = s.currentCoinName;
+                    GS.maxLeverage = s.maxLeverage;
+                }
+            }
+            this.sfx.play('click');
+
+            // Reconnect feed
+            this.feed.connect(GS.currentSymbol);
+            this.updateBalance();
+
+            // Resume logic
+            if (GS.currentStage > 0) {
+                if (GS.mode === 'EASY' && GS.rtRound > 0) {
+                    this.rtUpdateUI();
+                    this.showScreen('realtime');
+                } else if (GS.mode) {
+                    this.showScreen('game');
+                    this.updateDots();
+                    $('hudMode').textContent = GS.mode;
+                    $('hudStage').textContent = `STAGE ${GS.currentStage}/${GS.totalStages || '?'}`;
+                    // Note: Cannot easily resume a mid-flight runStage because of real-time price checks,
+                    // but showing the HUD and current stage is a good start.
+                } else {
+                    this.showScreen('select');
+                }
+            } else {
+                this.showScreen('select');
+            }
+        } else {
+            alert(res.msg);
+        }
+    }
+
+    saveProgress() {
+        if (GS.currentUser) {
+            this.auth.saveState(GS.currentUser, GS);
+        }
     }
 
     // -- PRICE --
@@ -719,6 +838,11 @@ class Game {
 
     // -- EVENTS --
     bindEvents() {
+        // Login
+        $('btnLogin').addEventListener('click', () => this.handleLogin());
+        $('loginPw').addEventListener('keypress', (e) => { if (e.key === 'Enter') this.handleLogin(); });
+        $('loginId').addEventListener('keypress', (e) => { if (e.key === 'Enter') $('loginPw').focus(); });
+
         // Mode cards
         document.querySelectorAll('.mode-card').forEach(card => {
             card.addEventListener('click', () => {
@@ -950,12 +1074,14 @@ class Game {
     updateBalance() {
         $('hudBalance').textContent = '₩' + Math.round(GS.balance).toLocaleString();
         if ($('hudBetLev')) $('hudBetLev').textContent = 'x' + GS.maxLeverage;
+        this.saveProgress();
     }
 
     // -- STAGE --
     async nextStage() {
         if (!GS.isRunning) return;
         GS.currentStage++;
+        this.saveProgress();
 
         if (GS.currentStage > GS.totalStages) { this.onVictory(); return; }
 
