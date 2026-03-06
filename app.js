@@ -370,7 +370,7 @@ class TopMover {
         CFG.TP = (100 / maxLev);
         CFG.SL = (100 / maxLev);
         this.updateUI(coin, maxLev);
-        if (window.game && window.game.bigRoad) window.game.bigRoad.setThreshold(100 / maxLev);
+        // Baccarat threshold will be synced in Game.onPrice or Game.selectCoin call
         // Save selection (v2 to avoid cached bad coins)
         try { localStorage.setItem('longshot_topmover_v2', JSON.stringify({ symbol: coin.symbol, coinName: GS.currentCoinName, maxLev, selectedAt: GS.coinSelectedAt, change: coin.priceChangePercent })); } catch (e) { }
         return coin;
@@ -619,6 +619,12 @@ class Game {
             });
         }
         this.topMover.startAutoRefresh();
+
+        // Sync Baccarat threshold with current session leverage
+        if (GS.maxLeverage > 0) {
+            this.bigRoad.setThreshold(100 / GS.maxLeverage);
+        }
+
         this.feed.on(d => this.onPrice(d));
         this.bindEvents();
         this.updateSeeds();
@@ -627,7 +633,13 @@ class Game {
 
     // -- PRICE --
     onPrice(d) {
-        // BigRoad 바카라 추적
+        // Dynamic Baccarat Threshold Sync
+        const targetThr = 100 / (GS.maxLeverage || 100);
+        if (Math.abs(this.bigRoad.threshold - targetThr) > 0.001) {
+            this.bigRoad.setThreshold(targetThr);
+        }
+
+        // BigRoad 추적
         this.bigRoad.onPrice(d.price);
 
         // Ticker

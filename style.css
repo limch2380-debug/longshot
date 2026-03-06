@@ -658,9 +658,9 @@ body {
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
-    max-width: 800px;
+    max-width: 920px;
     z-index: 20;
-    padding: 20px 40px 0;
+    padding: 24px 40px 0;
     box-sizing: border-box;
 }
 
@@ -794,7 +794,7 @@ body {
     position: relative;
     z-index: 2;
     text-align: center;
-    margin-top: 16px
+    margin-top: -20px;
 }
 
 .pnl-direction {
@@ -848,7 +848,7 @@ body {
 
 .tpsl-bar {
     position: absolute;
-    bottom: 180px;
+    bottom: 140px;
     left: 20px;
     right: 20px;
     z-index: 2;
@@ -1462,11 +1462,14 @@ body.state-critical .game-visual {
 
 .mini-road-section.game-mini {
     position: absolute;
-    bottom: 80px;
-    left: 20px;
-    right: 20px;
-    z-index: 3;
-    margin-top: 0
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    z-index: 10;
+    margin-top: 0;
+    border-radius: 20px 20px 0 0;
+    border-bottom: none;
+    background: rgba(10, 10, 30, .85);
 }
 
 .mini-road-header {
@@ -2593,50 +2596,30 @@ a.bac-toggle {
    ==================================================== */
 @media (max-width: 600px) {
     .game-hud {
-        padding: 12px 16px 0;
+        padding: 12px 14px 0;
     }
 
     .hud-row {
-        max-width: 320px;
+        max-width: 310px;
         margin: 0 auto;
     }
 
-    .hud-big {
-        font-size: 15px;
-    }
-
-    .hud-label {
-        font-size: 9px;
-    }
-
-    .hud-price {
-        font-size: 14px;
-    }
-
-    .bet-amount {
-        font-size: 32px;
-    }
-
-    .bet-lev-badge {
-        font-size: 13px;
-        padding: 2px 6px;
-    }
-
-    .pnl-amount {
-        font-size: 36px;
+    .bet-display-top {
+        margin-bottom: 40px !important;
     }
 
     .pnl-display {
-        transform: translateY(-50px) !important;
+        transform: translateY(-80px) !important;
     }
 
     .tpsl-bar {
-        bottom: 160px !important;
+        bottom: 130px !important;
     }
 
     .mini-road-section.game-mini {
-        bottom: 8px !important;
-        left: 8px !important;
-        right: 8px !important;
+        bottom: 0px !important;
+        left: 0px !important;
+        right: 0px !important;
+        padding-bottom: env(safe-area-inset-bottom, 12px);
     }
 }
