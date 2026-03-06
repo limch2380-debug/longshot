@@ -431,9 +431,12 @@ class BigRoad {
         this.fetchHistory();
     }
     bindEvents() {
-        $('btnBacToggle').addEventListener('click', () => this.toggle());
-        $('btnBacClose').addEventListener('click', () => this.close());
-        $('bacPanel').addEventListener('click', (e) => { if (e.target === $('bacPanel')) this.close(); });
+        const btn = $('btnBacToggle');
+        if (btn) btn.addEventListener('click', () => this.toggle());
+        const close = $('btnBacClose');
+        if (close) close.addEventListener('click', () => this.close());
+        const panel = $('bacPanel');
+        if (panel) panel.addEventListener('click', (e) => { if (e.target === panel) this.close(); });
     }
     toggle() { this.isOpen ? this.close() : this.open(); }
     open() { this.isOpen = true; $('bacPanel').classList.add('active'); this.render(); }
