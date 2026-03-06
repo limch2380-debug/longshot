@@ -45,6 +45,7 @@
     letter-spacing: 4px;
     background: linear-gradient(135deg, var(--gold), #fff, var(--gold));
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 8px;
 }
@@ -118,6 +119,50 @@
 
 .login-btn:active {
     transform: translateY(0);
+}
+
+.login-options {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 0 16px 4px;
+}
+
+.login-options input[type="checkbox"] {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: rgba(0, 0, 0, .3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: all .3s;
+}
+
+.login-options input[type="checkbox"]:checked {
+    background: var(--gold);
+    border-color: var(--gold);
+}
+
+.login-options input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #000;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.login-options label {
+    font-size: 13px;
+    color: var(--text2);
+    cursor: pointer;
+    user-select: none;
+    font-weight: 500;
 }
 
 *,
@@ -529,6 +574,7 @@ body {
 .mc-mult.legend {
     background: linear-gradient(135deg, var(--gold), var(--pink));
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent
 }
 
@@ -1222,6 +1268,7 @@ body {
     letter-spacing: 5px;
     background: linear-gradient(135deg, var(--gold), #fff, var(--gold));
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     background-size: 200% 100%;
     animation: shimmer 3s infinite;
@@ -1311,6 +1358,7 @@ body {
     letter-spacing: 6px;
     background: linear-gradient(135deg, var(--gold), #fff, var(--gold), var(--pink));
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     background-size: 300% 100%;
     animation: shimmer 2s infinite;
@@ -1330,6 +1378,7 @@ body {
     font-weight: 900;
     background: linear-gradient(135deg, var(--gold), var(--cyan));
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 0 20px rgba(255, 215, 0, .4))
 }

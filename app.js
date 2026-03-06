@@ -687,7 +687,18 @@ class Game {
         this.feed.on(d => this.onPrice(d));
         this.bindEvents();
         this.updateSeeds();
+        this.setupLoginAutofill();
         this.loop();
+    }
+
+    setupLoginAutofill() {
+        const id = localStorage.getItem('longshot_rem_id');
+        const pw = localStorage.getItem('longshot_rem_pw');
+        if (id && pw) {
+            $('loginId').value = id;
+            $('loginPw').value = pw;
+            $('saveLogin').checked = true;
+        }
     }
 
     // -- AUTH FLOW --
@@ -715,6 +726,16 @@ class Game {
                     GS.maxLeverage = s.maxLeverage;
                 }
             }
+
+            // Save/Clear credentials for "Remember Me"
+            if ($('saveLogin').checked) {
+                localStorage.setItem('longshot_rem_id', id);
+                localStorage.setItem('longshot_rem_pw', pw);
+            } else {
+                localStorage.removeItem('longshot_rem_id');
+                localStorage.removeItem('longshot_rem_pw');
+            }
+
             this.sfx.play('click');
 
             // Reconnect feed
