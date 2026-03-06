@@ -100,6 +100,23 @@
             <button class="btn-go" id="btnGo" disabled>
                 <span id="btnGoText">모든 단계를 선택하세요</span>
             </button>
+
+            <!-- Mini Big Road (Plan Screen) -->
+            <div class="mini-road-section">
+                <div class="mini-road-header">
+                    <span class="mini-road-icon">🎰</span>
+                    <span class="mini-road-title">BTC ROAD MAP</span>
+                    <span class="mini-road-ref" id="miniRefPlan">기준가 로딩...</span>
+                    <div class="mini-road-stats">
+                        <span class="mrs long" id="miniLongPlan">L:0</span>
+                        <span class="mrs short" id="miniShortPlan">S:0</span>
+                    </div>
+                </div>
+                <div class="mini-road-grid-wrap">
+                    <div class="mini-road-grid" id="miniRoadPlan"></div>
+                </div>
+                <div class="mini-road-predict" id="miniPredictPlan">분석 대기 중...</div>
+            </div>
         </div>
     </div>
 
@@ -155,6 +172,21 @@
                     <div class="tpsl-track tp">
                         <div class="tpsl-fill tp" id="tpFill"></div>
                     </div>
+                </div>
+            </div>
+            <!-- Mini Big Road (Game Screen) -->
+            <div class="mini-road-section game-mini">
+                <div class="mini-road-header">
+                    <span class="mini-road-icon">🎰</span>
+                    <span class="mini-road-title">ROAD</span>
+                    <div class="mini-road-stats">
+                        <span class="mrs long" id="miniLongGame">L:0</span>
+                        <span class="mrs short" id="miniShortGame">S:0</span>
+                    </div>
+                    <span class="mini-road-predict" id="miniPredictGame">—</span>
+                </div>
+                <div class="mini-road-grid-wrap">
+                    <div class="mini-road-grid" id="miniRoadGame"></div>
                 </div>
             </div>
         </div>
