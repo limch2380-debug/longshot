@@ -39,7 +39,7 @@ class PriceFeed {
         const sym = GS.currentSymbol.toLowerCase();
         if (this.ws) { try { this.ws.close(); } catch (e) { } }
         try {
-            this.ws = new WebSocket('wss://stream.binance.com:9443/ws/' + sym + '@ticker');
+            this.ws = new WebSocket('wss://fstream.binance.com/ws/' + sym + '@ticker');
             this.ws.onopen = () => { console.log('✅ WS connected'); GS.wsConnected = true; this.retries = 0; };
             this.ws.onmessage = e => {
                 const d = JSON.parse(e.data);
