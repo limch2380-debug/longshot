@@ -876,6 +876,11 @@ class Game {
 
     // -- START GAME --
     startGame() {
+        if (GS.btcPrice === 0) {
+            alert("실시간 코인 시세를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+            return;
+        }
+
         const cfg = CFG[GS.mode];
         GS.balance = GS.seed;
         GS.totalStages = cfg.stages;
@@ -1127,6 +1132,10 @@ class Game {
     }
     async rtGo() {
         if (!GS.rtDirection) return;
+        if (GS.btcPrice === 0) {
+            alert("실시간 코인 시세를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+            return;
+        }
         this.sfx.play('start');
         GS.totalStages = 1;
         GS.currentStage = 0;
