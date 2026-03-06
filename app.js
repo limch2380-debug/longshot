@@ -393,7 +393,8 @@ class TopMover {
         const hs = $('hudSymbol'); if (hs) hs.textContent = base;
         const hl = $('hudLev'); if (hl) hl.textContent = 'x' + maxLev;
         const rs = $('rtSymbol'); if (rs) rs.textContent = base;
-        const cv = $('btnChartView'); if (cv) cv.href = 'https://www.tradingview.com/chart/?symbol=BINANCE%3A' + GS.currentSymbol + '.P';
+        const cv = $('btnChartView'); if (cv) cv.href = 'https://www.tradingview.com/chart/?symbol=BINANCE%3A' + GS.currentSymbol + 'PERP';
+        const rd = $('rtCardDesc'); if (rd) rd.textContent = '지금 바로 ' + base + ' 방향을 예측하세요';
         // Update TP/SL labels
         const tpPct = (100 / maxLev).toFixed(1);
         const tpL = $('tpLabel'); if (tpL) tpL.textContent = 'TP +' + tpPct + '%';
