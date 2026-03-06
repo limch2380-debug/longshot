@@ -27,7 +27,7 @@
             </div>
             <div class="live-ticker">
                 <div class="ticker-dot"></div>
-                <span class="ticker-label">BTC/USDT</span>
+                <span class="ticker-label" id="tickerSymbol">불러오는 중...</span>
                 <span class="ticker-price" id="tickerPrice">연결 중...</span>
                 <span class="ticker-change" id="tickerChange"></span>
             </div>
@@ -119,7 +119,7 @@
             </div>
             <div class="plan-price-bar">
                 <span class="live-dot"></span>
-                <span>BTC/USDT</span>
+                <span id="planSymbol">BTC/USDT</span>
                 <span class="plan-price" id="planPrice">$0.00</span>
                 <span class="plan-change" id="planChange"></span>
             </div>
@@ -134,7 +134,7 @@
             <div class="mini-road-section">
                 <div class="mini-road-header">
                     <span class="mini-road-icon">🎰</span>
-                    <span class="mini-road-title">BTC ROAD MAP</span>
+                    <span class="mini-road-title" id="miniRoadTitlePlan">ROAD MAP</span>
                     <span class="mini-road-ref" id="miniRefPlan">기준가 로딩...</span>
                     <div class="mini-road-stats">
                         <span class="mrs long" id="miniLongPlan">L:0</span>
@@ -158,12 +158,12 @@
                     <div class="hud-big" id="hudStage">STAGE 1/3</div>
                 </div>
                 <div class="hud-cell center">
-                    <div class="hud-label"><span class="live-dot"></span> BTC/USDT</div>
+                    <div class="hud-label"><span class="live-dot"></span> <span id="hudSymbol">BTC/USDT</span></div>
                     <div class="hud-price" id="hudPrice">$0.00</div>
                 </div>
                 <div class="hud-cell right">
-                    <div class="hud-label">자산</div>
-                    <div class="hud-balance" id="hudBalance">₩10,000</div>
+                    <div class="hud-label">LEV</div>
+                    <div class="hud-big" id="hudLev" style="color:var(--gold)">x100</div>
                 </div>
             </div>
             <div class="stage-bar">
@@ -175,6 +175,11 @@
         <!-- 게임 비주얼 영역 -->
         <div class="game-visual" id="gameVisual">
             <canvas id="gameCanvas"></canvas>
+            <!-- 배팅 금액 (로켓 위 중앙) -->
+            <div class="bet-display-top" id="betDisplayTop">
+                <div class="bet-label">배팅 금액</div>
+                <div class="bet-amount" id="hudBalance">₩10,000</div>
+            </div>
             <!-- 중앙 로켓/캐릭터 -->
             <div class="rocket-zone" id="rocketZone">
                 <div class="rocket" id="rocket">🚀</div>
@@ -188,7 +193,7 @@
             <!-- TP/SL Progress -->
             <div class="tpsl-bar">
                 <div class="tpsl-zone sl">
-                    <span>SL -0.9%</span>
+                    <span id="slLabel">SL -100%</span>
                     <div class="tpsl-track sl">
                         <div class="tpsl-fill sl" id="slFill"></div>
                     </div>
@@ -197,7 +202,7 @@
                     <span id="tpslEntry">진입가</span>
                 </div>
                 <div class="tpsl-zone tp">
-                    <span>TP +1.1%</span>
+                    <span id="tpLabel">TP +100%</span>
                     <div class="tpsl-track tp">
                         <div class="tpsl-fill tp" id="tpFill"></div>
                     </div>
@@ -244,7 +249,7 @@
             </div>
             <div class="rt-play-price">
                 <span class="live-dot"></span>
-                <span>BTC/USDT</span>
+                <span id="rtSymbol">코인 선정 중...</span>
                 <span class="rt-price" id="rtPrice">$0.00</span>
                 <span class="rt-change" id="rtChange"></span>
             </div>
@@ -270,7 +275,7 @@
             <div class="mini-road-section">
                 <div class="mini-road-header">
                     <span class="mini-road-icon">🎰</span>
-                    <span class="mini-road-title">BTC ROAD MAP</span>
+                    <span class="mini-road-title" id="miniRoadTitleRT">ROAD MAP</span>
                     <div class="mini-road-stats">
                         <span class="mrs long" id="miniLongRT">L:0</span>
                         <span class="mrs short" id="miniShortRT">S:0</span>
@@ -332,7 +337,8 @@
     </div>
 
     <!-- Baccarat Road Toggle Button (메인 화면 우상단) -->
-    <button class="bac-toggle" id="btnBacToggle" title="바카라 로드맵">🎰</button>
+    <a class="bac-toggle" id="btnChartView" href="https://www.tradingview.com/chart/?symbol=BINANCE%3ABTCUSDT.P"
+        target="_blank" rel="noopener" title="TradingView 차트 보기">📊</a>
 
     <!-- ===== BACCARAT BIG ROAD PANEL ===== -->
     <div id="bacPanel" class="bac-panel">
@@ -340,9 +346,9 @@
             <!-- Header -->
             <div class="bac-header">
                 <div class="bac-header-left">
-                    <span class="bac-logo">🎰</span>
-                    <h2 class="bac-title">BTC ROAD MAP</h2>
-                    <span class="bac-sub">바카라 빅 로드 · 1% 기준</span>
+                    <span class="bac-logo">📊</span>
+                    <h2 class="bac-title" id="bacTitleRoad">ROAD MAP</h2>
+                    <span class="bac-sub" id="bacSubTitle">빅 로드 · 1% 기준</span>
                 </div>
                 <div class="bac-header-right">
                     <div class="bac-live">

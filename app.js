@@ -12,14 +12,18 @@ const GS = {
     direction: null, entryPrice: 0, tpPrice: 0, slPrice: 0,
     wsConnected: false,
     binanceOrderId: null,
+    currentSymbol: 'BTCUSDT',
+    currentCoinName: 'BTC/USDT',
+    maxLeverage: 100,
+    coinSelectedAt: 0,
 };
 
-const CFG_RT = { stages: 1, TP: 1.1, SL: 0.9 };
+const CFG_RT = { stages: 1 };
 const CFG = {
     EASY: { stages: 3, mult: 8, grav: 1.0 },
     NORMAL: { stages: 5, mult: 32, grav: 2.0 },
     LEGEND: { stages: 10, mult: 1024, grav: 4.0 },
-    TP: 1.1, SL: 0.9, LEV: 100,
+    TP: 100, SL: 100, LEV: 100,
 };
 
 const $ = id => document.getElementById(id);
@@ -30,9 +34,12 @@ const screens = { select: $('screenSelect'), plan: $('screenPlan'), game: $('scr
 // ============================================================
 class PriceFeed {
     constructor() { this.ws = null; this.listeners = []; this.retries = 0; }
-    connect() {
+    connect(symbol) {
+        if (symbol) GS.currentSymbol = symbol;
+        const sym = GS.currentSymbol.toLowerCase();
+        if (this.ws) { try { this.ws.close(); } catch (e) { } }
         try {
-            this.ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@ticker');
+            this.ws = new WebSocket('wss://stream.binance.com:9443/ws/' + sym + '@ticker');
             this.ws.onopen = () => { console.log('✅ WS connected'); GS.wsConnected = true; this.retries = 0; };
             this.ws.onmessage = e => {
                 const d = JSON.parse(e.data);
@@ -48,11 +55,11 @@ class PriceFeed {
     }
     async fallbackREST() {
         try {
-            const r = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT');
+            const r = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=' + GS.currentSymbol);
             const d = await r.json();
             GS.btcPrice = parseFloat(d.lastPrice); GS.open24h = parseFloat(d.openPrice); GS.change24h = parseFloat(d.priceChangePercent);
             this.notify({ price: GS.btcPrice, prev: GS.btcPrice, change: GS.change24h });
-            this._poll = setInterval(async () => { try { const r2 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'); const d2 = await r2.json(); GS.prevPrice = GS.btcPrice; GS.btcPrice = parseFloat(d2.price); GS.change24h = ((GS.btcPrice - GS.open24h) / GS.open24h * 100); this.notify({ price: GS.btcPrice, prev: GS.prevPrice, change: GS.change24h }) } catch (e) { } }, 2000);
+            this._poll = setInterval(async () => { try { const r2 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=' + GS.currentSymbol); const d2 = await r2.json(); GS.prevPrice = GS.btcPrice; GS.btcPrice = parseFloat(d2.price); GS.change24h = ((GS.btcPrice - GS.open24h) / GS.open24h * 100); this.notify({ price: GS.btcPrice, prev: GS.prevPrice, change: GS.change24h }) } catch (e) { } }, 2000);
         } catch (e) { }
     }
     on(cb) { this.listeners.push(cb); }
@@ -92,12 +99,12 @@ class BinanceFutures {
         const side = direction === 'LONG' ? 'BUY' : 'SELL';
         const closeSide = direction === 'LONG' ? 'SELL' : 'BUY';
 
-        // 100배 레버리지 설정
-        await this._req('POST', '/fapi/v1/leverage', { symbol: 'BTCUSDT', leverage: 100 });
+        // 100배 레버리지 설정 (Config)
+        await this._req('POST', '/fapi/v1/leverage', { symbol: GS.currentSymbol, leverage: GS.maxLeverage });
 
         // 시장가 진입
         const order = await this._req('POST', '/fapi/v1/order', {
-            symbol: 'BTCUSDT', side, type: 'MARKET', quantity: quantity.toFixed(3),
+            symbol: GS.currentSymbol, side, type: 'MARKET', quantity: quantity.toFixed(3),
         });
 
         if (order.orderId) {
@@ -109,7 +116,7 @@ class BinanceFutures {
                 : (entryPrice * (1 - CFG.TP / 100)).toFixed(2);
 
             await this._req('POST', '/fapi/v1/order', {
-                symbol: 'BTCUSDT', side: closeSide, type: 'TAKE_PROFIT_MARKET',
+                symbol: GS.currentSymbol, side: closeSide, type: 'TAKE_PROFIT_MARKET',
                 stopPrice: tpPrice, closePosition: 'true', workingType: 'MARK_PRICE',
             });
 
@@ -119,7 +126,7 @@ class BinanceFutures {
                 : (entryPrice * (1 + CFG.SL / 100)).toFixed(2);
 
             await this._req('POST', '/fapi/v1/order', {
-                symbol: 'BTCUSDT', side: closeSide, type: 'STOP_MARKET',
+                symbol: GS.currentSymbol, side: closeSide, type: 'STOP_MARKET',
                 stopPrice: slPrice, closePosition: 'true', workingType: 'MARK_PRICE',
             });
 
@@ -130,14 +137,14 @@ class BinanceFutures {
 
     // 모든 미체결 주문 취소
     async cancelAllOrders() {
-        return this._req('DELETE', '/fapi/v1/allOpenOrders', { symbol: 'BTCUSDT' });
+        return this._req('DELETE', '/fapi/v1/allOpenOrders', { symbol: GS.currentSymbol });
     }
 
     // 포지션 조회
     async getPosition() {
-        const positions = await this._req('GET', '/fapi/v2/positionRisk', { symbol: 'BTCUSDT' });
+        const positions = await this._req('GET', '/fapi/v2/positionRisk', { symbol: GS.currentSymbol });
         if (Array.isArray(positions)) {
-            return positions.find(p => p.symbol === 'BTCUSDT' && parseFloat(p.positionAmt) !== 0);
+            return positions.find(p => p.symbol === GS.currentSymbol && parseFloat(p.positionAmt) !== 0);
         }
         return null;
     }
@@ -306,6 +313,107 @@ class LegendFX {
 }
 
 // ============================================================
+// TOP MOVER — 24시간 등락률 상위 1위 코인 자동 선정
+// ============================================================
+class TopMover {
+    constructor() {
+        this.coinData = null;
+        this.selectTime = 0;
+        this.checkInterval = null;
+    }
+    async findTopMover() {
+        try {
+            const res = await fetch('https://fapi.binance.com/fapi/v1/ticker/24hr');
+            const tickers = await res.json();
+            // USDT 페어만, 유동성 있는 코인
+            const usdt = tickers
+                .filter(t => t.symbol.endsWith('USDT') && parseFloat(t.quoteVolume) > 10000000)
+                .sort((a, b) => Math.abs(parseFloat(b.priceChangePercent)) - Math.abs(parseFloat(a.priceChangePercent)));
+            if (usdt.length > 0) {
+                this.coinData = usdt[0];
+                return this.coinData;
+            }
+        } catch (e) { console.warn('TopMover fetch failed:', e); }
+        return null;
+    }
+    async getMaxLeverage(symbol) {
+        try {
+            const res = await fetch('https://fapi.binance.com/fapi/v1/leverageBracket');
+            const brackets = await res.json();
+            const found = brackets.find(b => b.symbol === symbol);
+            if (found && found.brackets && found.brackets.length > 0) {
+                return found.brackets[0].initialLeverage;
+            }
+        } catch (e) { console.warn('Leverage fetch failed:', e); }
+        return 20; // default fallback
+    }
+    async selectCoin() {
+        const coin = await this.findTopMover();
+        if (!coin) return;
+        GS.currentSymbol = coin.symbol;
+        const base = coin.symbol.replace('USDT', '');
+        GS.currentCoinName = base + '/USDT';
+        GS.coinSelectedAt = Date.now();
+        const maxLev = await this.getMaxLeverage(coin.symbol);
+        GS.maxLeverage = maxLev;
+        CFG.LEV = maxLev;
+        // Update TP/SL: 익절 100%, 손절 100% (레버리지 기준)
+        CFG.TP = (100 / maxLev);
+        CFG.SL = (100 / maxLev);
+        this.updateUI(coin, maxLev);
+        // Save selection
+        try { localStorage.setItem('longshot_topmover', JSON.stringify({ symbol: coin.symbol, coinName: GS.currentCoinName, maxLev, selectedAt: GS.coinSelectedAt, change: coin.priceChangePercent })); } catch (e) { }
+        return coin;
+    }
+    loadSaved() {
+        try {
+            const saved = localStorage.getItem('longshot_topmover');
+            if (saved) {
+                const d = JSON.parse(saved);
+                const elapsed = Date.now() - d.selectedAt;
+                if (elapsed < 24 * 60 * 60 * 1000) { // still within 24h
+                    GS.currentSymbol = d.symbol;
+                    GS.currentCoinName = d.coinName;
+                    GS.maxLeverage = d.maxLev;
+                    GS.coinSelectedAt = d.selectedAt;
+                    CFG.LEV = d.maxLev;
+                    CFG.TP = (100 / d.maxLev);
+                    CFG.SL = (100 / d.maxLev);
+                    return true;
+                }
+            }
+        } catch (e) { }
+        return false;
+    }
+    updateUI(coin, maxLev) {
+        const base = GS.currentCoinName;
+        const chg = parseFloat(coin.priceChangePercent).toFixed(2);
+        // Update all symbol labels
+        const ts = $('tickerSymbol'); if (ts) ts.innerHTML = base + ' <span class="top-mover-badge">🔥 24H TOP <span class="top-mover-change">' + (chg > 0 ? '+' : '') + chg + '%</span></span>';
+        const hs = $('hudSymbol'); if (hs) hs.textContent = base;
+        const hl = $('hudLev'); if (hl) hl.textContent = 'x' + maxLev;
+        const rs = $('rtSymbol'); if (rs) rs.textContent = base;
+        const cv = $('btnChartView'); if (cv) cv.href = 'https://www.tradingview.com/chart/?symbol=BINANCE%3A' + GS.currentSymbol + '.P';
+        // Update TP/SL labels
+        const tpPct = (100 / maxLev).toFixed(1);
+        const tpL = $('tpLabel'); if (tpL) tpL.textContent = 'TP +' + tpPct + '%';
+        const slL = $('slLabel'); if (slL) slL.textContent = 'SL -' + tpPct + '%';
+    }
+    startAutoRefresh() {
+        this.checkInterval = setInterval(async () => {
+            const elapsed = Date.now() - GS.coinSelectedAt;
+            if (elapsed >= 24 * 60 * 60 * 1000 && !GS.isRunning) {
+                console.log('⏰ 24시간 경과 — 코인 재선정');
+                await this.selectCoin();
+                if (window.game && window.game.feed) {
+                    window.game.feed.connect(GS.currentSymbol);
+                }
+            }
+        }, 60000); // check every minute
+    }
+}
+
+// ============================================================
 // BACCARAT BIG ROAD (1% 기준 변동 추적)
 // ============================================================
 class BigRoad {
@@ -333,7 +441,7 @@ class BigRoad {
     async fetchHistory() {
         if (this.history.length >= 10) { this.renderAll(); return; }
         try {
-            const res = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=500');
+            const res = await fetch('https://api.binance.com/api/v3/klines?symbol=' + GS.currentSymbol + '&interval=1h&limit=500');
             const k = await res.json();
             if (!k || !k.length) return;
             let ref = parseFloat(k[0][4]);
@@ -459,13 +567,36 @@ class Game {
         this.feed = new PriceFeed();
         this.futures = new BinanceFutures();
         this.bigRoad = new BigRoad();
-        this.bigRoad = new BigRoad();
+        this.topMover = new TopMover();
 
         this.grav = -0.3;
         this.priceCheckInterval = null;
         this.burstTimer = null;
 
-        this.feed.connect();
+        // Top Mover coin selection
+        const hasSaved = this.topMover.loadSaved();
+        if (hasSaved) {
+            console.log('📌 저장된 코인 로드:', GS.currentCoinName, 'x' + GS.maxLeverage);
+            this.topMover.updateUI({ priceChangePercent: '0', symbol: GS.currentSymbol }, GS.maxLeverage);
+            this.feed.connect(GS.currentSymbol);
+        } else {
+            this.topMover.selectCoin().then(coin => {
+                if (coin) {
+                    console.log('🔥 24H Top Mover:', GS.currentCoinName, '+' + coin.priceChangePercent + '%', 'x' + GS.maxLeverage);
+                    this.feed.connect(GS.currentSymbol);
+                } else {
+                    console.log('⚠️ TopMover fetch failed, fallback to BTC/USDT');
+                    GS.currentSymbol = 'BTCUSDT';
+                    GS.currentCoinName = 'BTC/USDT';
+                    GS.maxLeverage = 100;
+                    CFG.LEV = 100;
+                    CFG.TP = 1; CFG.SL = 1;
+                    this.topMover.updateUI({ priceChangePercent: '0', symbol: 'BTCUSDT' }, 100);
+                    this.feed.connect('BTCUSDT'); // fallback
+                }
+            });
+        }
+        this.topMover.startAutoRefresh();
         this.feed.on(d => this.onPrice(d));
         this.bindEvents();
         this.updateSeeds();
@@ -478,13 +609,10 @@ class Game {
         this.bigRoad.onPrice(d.price);
 
         // Ticker
-        $('tickerPrice').textContent = '$' + d.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const tp = $('tickerPrice'); if (tp) tp.textContent = '$' + d.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const ce = $('tickerChange');
         ce.textContent = (d.change >= 0 ? '+' : '') + d.change.toFixed(2) + '%';
         ce.className = 'ticker-change ' + (d.change >= 0 ? 'up' : 'down');
-
-        // BigRoad 바카라 추적
-        this.bigRoad.onPrice(d.price);
 
         // Realtime price
         if (screens.realtime && screens.realtime.classList.contains('active')) {
