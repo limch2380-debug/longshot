@@ -5,7 +5,7 @@
  */
 
 const GS = {
-    mode: null, playMode: 'practice', totalStages: 0, currentStage: 0,
+    mode: null, playMode: 'practice', totalStages: 0, currentStage: 0, rtRound: 0, rtDirection: null, rtMode: false,
     seed: 10000, balance: 10000, isRunning: false,
     btcPrice: 0, prevPrice: 0, open24h: 0, change24h: 0,
     plan: [],        // ['LONG','SHORT','LONG'] — 사전 선택된 방향 배열
@@ -339,10 +339,10 @@ class BigRoad {
             let ref = parseFloat(k[0][4]);
             this.history = [];
             for (let i = 1; i < k.length; i++) {
-                const c = parseFloat(k[i][4]);
-                const ch = ((c - ref) / ref) * 100;
-                if (ch >= this.threshold) { this.history.push({ dir:'LONG', price:c, refPrice:ref, time:k[i][0] }); ref = c; }
-                else if (ch <= -this.threshold) { this.history.push({ dir:'SHORT', price:c, refPrice:ref, time:k[i][0] }); ref = c; }
+                const cl = parseFloat(k[i][4]);
+                const ch = ((cl - ref) / ref) * 100;
+                if (ch >= this.threshold) { this.history.push({ dir: 'LONG', price: cl, refPrice: ref, time: k[i][0] }); ref = cl; }
+                else if (ch <= -this.threshold) { this.history.push({ dir: 'SHORT', price: cl, refPrice: ref, time: k[i][0] }); ref = cl; }
             }
             this.refPrice = ref;
             this.save();
@@ -415,26 +415,26 @@ class BigRoad {
             const ld = this.history[t - 1].dir; let st = 1;
             for (let i = t - 2; i >= 0; i--) { if (this.history[i].dir === ld) st++; else break; }
             if (st >= 3) { pe.textContent = ld === 'LONG' ? `🔥 LONG ${st}연속 추세` : `🧊 SHORT ${st}연속 추세`; pe.className = 'mini-road-predict ' + ld.toLowerCase(); }
-            else { pe.textContent = `${ld} ×${st} | L:${((lc/t)*100).toFixed(0)}% S:${((sc/t)*100).toFixed(0)}%`; pe.className = 'mini-road-predict'; }
+            else { pe.textContent = `${ld} ×${st} | L:${((lc / t) * 100).toFixed(0)}% S:${((sc / t) * 100).toFixed(0)}%`; pe.className = 'mini-road-predict'; }
         }
     }
     updateStats() {
         const t = this.history.length; if (t === 0) return;
         const lc = this.history.filter(h => h.dir === 'LONG').length, sc = t - lc;
-        const lp = ((lc/t)*100).toFixed(0), sp = ((sc/t)*100).toFixed(0);
+        const lp = ((lc / t) * 100).toFixed(0), sp = ((sc / t) * 100).toFixed(0);
         $('bacLongCount').textContent = lc; $('bacLongPct').textContent = lp + '%';
         $('bacShortCount').textContent = sc; $('bacShortPct').textContent = sp + '%';
         $('bacBarLong').style.width = lp + '%'; $('bacBarShort').style.width = sp + '%';
-        let st = 1; const ld = this.history[t-1].dir;
-        for (let i = t-2; i >= 0; i--) { if (this.history[i].dir === ld) st++; else break; }
+        let st = 1; const ld = this.history[t - 1].dir;
+        for (let i = t - 2; i >= 0; i--) { if (this.history[i].dir === ld) st++; else break; }
         const sv = $('bacStreakVal'); sv.textContent = `${ld} ×${st}`; sv.style.color = ld === 'LONG' ? 'var(--green)' : 'var(--red)';
     }
     updatePrediction() {
         const t = this.history.length;
-        if (t < 3) { $('bacPredictIcon').textContent = '⏳'; $('bacPredictTitle').textContent = '데이터 수집 중...'; $('bacPredictTitle').className = 'bac-predict-title neutral'; $('bacPredictDesc').textContent = `${3-t}개 더 필요합니다`; return; }
+        if (t < 3) { $('bacPredictIcon').textContent = '⏳'; $('bacPredictTitle').textContent = '데이터 수집 중...'; $('bacPredictTitle').className = 'bac-predict-title neutral'; $('bacPredictDesc').textContent = `${3 - t}개 더 필요합니다`; return; }
         const rc = this.history.slice(-10), lr = rc.filter(h => h.dir === 'LONG').length, sr = rc.length - lr;
-        let st = 1; const ld = this.history[t-1].dir;
-        for (let i = t-2; i >= 0; i--) { if (this.history[i].dir === ld) st++; else break; }
+        let st = 1; const ld = this.history[t - 1].dir;
+        for (let i = t - 2; i >= 0; i--) { if (this.history[i].dir === ld) st++; else break; }
         const pt = $('bacPredictTitle'), pd = $('bacPredictDesc'), pi = $('bacPredictIcon');
         if (st >= 5) { if (ld === 'LONG') { pi.textContent = '🔥'; pt.textContent = '강한 상승 추세!'; pt.className = 'bac-predict-title long'; pd.textContent = `LONG ${st}연속`; } else { pi.textContent = '🧊'; pt.textContent = '강한 하락 추세!'; pt.className = 'bac-predict-title short'; pd.textContent = `SHORT ${st}연속`; } }
         else if (st >= 3) { if (ld === 'LONG') { pi.textContent = '📈'; pt.textContent = '상승 추세 진행 중'; pt.className = 'bac-predict-title long'; pd.textContent = `LONG ${st}연속 · L${lr}:S${sr}`; } else { pi.textContent = '📉'; pt.textContent = '하락 추세 진행 중'; pt.className = 'bac-predict-title short'; pd.textContent = `SHORT ${st}연속 · L${lr}:S${sr}`; } }
@@ -442,8 +442,8 @@ class BigRoad {
         else if (sr >= 7) { pi.textContent = '📉'; pt.textContent = '하락 우세'; pt.className = 'bac-predict-title short'; pd.textContent = `최근 SHORT ${sr}개`; }
         else { pi.textContent = '🔄'; pt.textContent = '혼조 · 방향 탐색 중'; pt.className = 'bac-predict-title neutral'; pd.textContent = `L${lr}:S${sr} 패턴 대기`; }
     }
-    save() { try { localStorage.setItem('longshot_bigroad', JSON.stringify({ refPrice: this.refPrice, history: this.history.slice(-200) })); } catch(e){} }
-    load() { try { const r = localStorage.getItem('longshot_bigroad'); if (r) { const d = JSON.parse(r); this.refPrice = d.refPrice || 0; this.history = d.history || []; if (this.refPrice > 0) this.updateRefUI(this.refPrice); } } catch(e){} }
+    save() { try { localStorage.setItem('longshot_bigroad', JSON.stringify({ refPrice: this.refPrice, history: this.history.slice(-200) })); } catch (e) { } }
+    load() { try { const r = localStorage.getItem('longshot_bigroad'); if (r) { const d = JSON.parse(r); this.refPrice = d.refPrice || 0; this.history = d.history || []; if (this.refPrice > 0) this.updateRefUI(this.refPrice); } } catch (e) { } }
 }
 
 // ============================================================
@@ -458,6 +458,7 @@ class Game {
         this.sfx = new SFX();
         this.feed = new PriceFeed();
         this.futures = new BinanceFutures();
+        this.bigRoad = new BigRoad();
         this.bigRoad = new BigRoad();
 
         this.grav = -0.3;
@@ -481,6 +482,17 @@ class Game {
         const ce = $('tickerChange');
         ce.textContent = (d.change >= 0 ? '+' : '') + d.change.toFixed(2) + '%';
         ce.className = 'ticker-change ' + (d.change >= 0 ? 'up' : 'down');
+
+        // BigRoad 바카라 추적
+        this.bigRoad.onPrice(d.price);
+
+        // Realtime price
+        if (screens.realtime && screens.realtime.classList.contains('active')) {
+            $('rtPrice').textContent = '$' + d.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const rc = $('rtChange');
+            rc.textContent = (d.change >= 0 ? '+' : '') + d.change.toFixed(2) + '%';
+            rc.className = 'rt-change ' + (d.change >= 0 ? 'up' : 'down');
+        }
 
         // Plan price
         if (screens.plan.classList.contains('active')) {
@@ -589,6 +601,19 @@ class Game {
         // Retry
         $('btnRetry').addEventListener('click', () => this.backToSelect());
         $('btnAgain').addEventListener('click', () => this.backToSelect());
+
+        // Realtime mode
+        $('btnRealtime').addEventListener('click', () => this.startRealtime());
+        $('reserveToggle').addEventListener('click', () => {
+            const m = $('reserveModes');
+            m.classList.toggle('open');
+            $('reserveArrow').textContent = m.classList.contains('open') ? '▲' : '▼';
+        });
+        $('rtBtnLong').addEventListener('click', () => this.rtPickDir('LONG'));
+        $('rtBtnShort').addEventListener('click', () => this.rtPickDir('SHORT'));
+        $('rtBtnGo').addEventListener('click', () => this.rtGo());
+        $('rtBtnContinue').addEventListener('click', () => this.rtContinue());
+        $('rtBtnStop').addEventListener('click', () => this.rtStop());
     }
 
     updateSeeds() {
@@ -937,20 +962,17 @@ class Game {
         GS.rtDirection = null;
         GS.balance = seed;
         GS.seed = seed;
-        GS.mode = 'EASY'; // use EASY config for TP/SL
+        GS.mode = 'EASY';
         GS.isRunning = false;
         GS.entryPrice = 0;
-
         if (GS.playMode === 'live') {
             const key = localStorage.getItem('longshot_api_key') || $('apiKey').value.trim();
             const secret = localStorage.getItem('longshot_api_secret') || $('apiSecret').value.trim();
             if (key && secret) this.futures.setCredentials(key, secret);
         }
-
         this.rtUpdateUI();
         this.showScreen('realtime');
     }
-
     rtUpdateUI() {
         $('rtRound').textContent = 'ROUND ' + GS.rtRound;
         $('rtBalance').textContent = '₩' + Math.round(GS.balance).toLocaleString();
@@ -959,25 +981,10 @@ class Game {
         $('rtBtnGo').disabled = true;
         $('rtGoText').textContent = '방향을 선택하세요';
         GS.rtDirection = null;
-
         if (GS.btcPrice > 0) {
-            $('rtPrice').textContent = '
-        this.bg.draw(this.grav);
-        this.gameVis.draw();
-        this.confetti.draw();
-        this.legendFx.draw();
-        requestAnimationFrame(() => this.loop());
-    }
-}
-
-// ============================================================
-// INIT
-// ============================================================
-document.addEventListener('DOMContentLoaded', () => { window.game = new Game(); });
- + GS.btcPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            $('rtPrice').textContent = '$' + GS.btcPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
     }
-
     rtPickDir(dir) {
         this.sfx.play('click');
         GS.rtDirection = dir;
@@ -986,46 +993,35 @@ document.addEventListener('DOMContentLoaded', () => { window.game = new Game(); 
         $('rtBtnGo').disabled = false;
         $('rtGoText').textContent = dir + ' 진행! →';
     }
-
     async rtGo() {
         if (!GS.rtDirection) return;
         this.sfx.play('start');
-
-        // Setup game state for this single round
         GS.totalStages = 1;
         GS.currentStage = 0;
         GS.plan = [GS.rtDirection];
         GS.isRunning = true;
         GS.entryPrice = 0;
-
-        // HUD for game screen
         $('hudMode').textContent = '실시간';
         $('hudStage').textContent = 'ROUND ' + GS.rtRound;
         this.updateBalance();
         this.createDots();
-
         this.showScreen('game');
         setTimeout(async () => {
             GS.currentStage = 1;
             this.updateDots();
             $('stageFill').style.width = '0%';
-
             const result = await this.runStage(GS.rtDirection);
-
             if (result === 'WIN') {
                 this.sfx.play('win');
                 this.gameVis.spawnBurst(true);
                 await this.showResult(true);
-
-                // Show continue modal
                 setTimeout(() => {
-                    const nextBal = GS.balance;
                     $('rtResultIcon').textContent = '🎉';
                     $('rtResultTitle').textContent = 'ROUND ' + GS.rtRound + ' CLEAR!';
                     $('rtResultTitle').className = 'rt-result-title win';
                     $('rtResultProfit').textContent = '+₩' + Math.round(GS.balance / 2).toLocaleString();
                     $('rtResultProfit').className = 'rt-result-profit profit';
-                    $('rtResultNext').textContent = '다음 라운드 배팅: ₩' + Math.round(nextBal).toLocaleString();
+                    $('rtResultNext').textContent = '다음 라운드 배팅: ₩' + Math.round(GS.balance).toLocaleString();
                     $('rtBtnContinue').style.display = '';
                     $('rtResultModal').classList.add('active');
                 }, 1500);
@@ -1033,7 +1029,6 @@ document.addEventListener('DOMContentLoaded', () => { window.game = new Game(); 
                 this.sfx.play('lose');
                 this.gameVis.spawnBurst(false);
                 await this.showResult(false);
-
                 setTimeout(() => {
                     $('rtResultIcon').textContent = '💀';
                     $('rtResultTitle').textContent = 'ROUND ' + GS.rtRound + ' FAILED';
@@ -1047,7 +1042,6 @@ document.addEventListener('DOMContentLoaded', () => { window.game = new Game(); 
             }
         }, 800);
     }
-
     rtContinue() {
         $('rtResultModal').classList.remove('active');
         GS.rtRound++;
@@ -1058,16 +1052,13 @@ document.addEventListener('DOMContentLoaded', () => { window.game = new Game(); 
         this.rtUpdateUI();
         this.showScreen('realtime');
     }
-
     rtStop() {
         $('rtResultModal').classList.remove('active');
         GS.rtMode = false;
         GS.isRunning = false;
         this.cleanup();
         document.body.className = '';
-
         if (GS.balance > GS.seed) {
-            // Won - show win screen
             this.onVictory();
         } else {
             this.backToSelect();
