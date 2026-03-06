@@ -14,6 +14,7 @@ const GS = {
     binanceOrderId: null,
 };
 
+const CFG_RT = { stages: 1, TP: 1.1, SL: 0.9 };
 const CFG = {
     EASY: { stages: 3, mult: 8, grav: 1.0 },
     NORMAL: { stages: 5, mult: 32, grav: 2.0 },
@@ -22,7 +23,7 @@ const CFG = {
 };
 
 const $ = id => document.getElementById(id);
-const screens = { select: $('screenSelect'), plan: $('screenPlan'), game: $('screenGame'), over: $('screenOver'), win: $('screenWin') };
+const screens = { select: $('screenSelect'), plan: $('screenPlan'), game: $('screenGame'), over: $('screenOver'), win: $('screenWin'), realtime: $('screenRealtime') };
 
 // ============================================================
 // BINANCE WEBSOCKET
@@ -374,6 +375,7 @@ class BigRoad {
         if (this.isOpen) this.render();
         this.renderMini('miniRoadPlan', 'miniLongPlan', 'miniShortPlan', 'miniPredictPlan');
         this.renderMini('miniRoadGame', 'miniLongGame', 'miniShortGame', 'miniPredictGame');
+        this.renderMini('miniRoadRT', 'miniLongRT', 'miniShortRT', 'miniPredictRT');
         this.updateStats();
         this.updatePrediction();
     }
@@ -927,6 +929,151 @@ class Game {
     }
 
     // -- RENDER LOOP --
+    // ====== REALTIME MODE ======
+    startRealtime() {
+        const seed = parseInt($('seedInput').value) || 10000;
+        GS.rtMode = true;
+        GS.rtRound = 1;
+        GS.rtDirection = null;
+        GS.balance = seed;
+        GS.seed = seed;
+        GS.mode = 'EASY'; // use EASY config for TP/SL
+        GS.isRunning = false;
+        GS.entryPrice = 0;
+
+        if (GS.playMode === 'live') {
+            const key = localStorage.getItem('longshot_api_key') || $('apiKey').value.trim();
+            const secret = localStorage.getItem('longshot_api_secret') || $('apiSecret').value.trim();
+            if (key && secret) this.futures.setCredentials(key, secret);
+        }
+
+        this.rtUpdateUI();
+        this.showScreen('realtime');
+    }
+
+    rtUpdateUI() {
+        $('rtRound').textContent = 'ROUND ' + GS.rtRound;
+        $('rtBalance').textContent = '₩' + Math.round(GS.balance).toLocaleString();
+        $('rtBtnLong').classList.remove('picked');
+        $('rtBtnShort').classList.remove('picked');
+        $('rtBtnGo').disabled = true;
+        $('rtGoText').textContent = '방향을 선택하세요';
+        GS.rtDirection = null;
+
+        if (GS.btcPrice > 0) {
+            $('rtPrice').textContent = '
+        this.bg.draw(this.grav);
+        this.gameVis.draw();
+        this.confetti.draw();
+        this.legendFx.draw();
+        requestAnimationFrame(() => this.loop());
+    }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => { window.game = new Game(); });
+ + GS.btcPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    }
+
+    rtPickDir(dir) {
+        this.sfx.play('click');
+        GS.rtDirection = dir;
+        $('rtBtnLong').classList.toggle('picked', dir === 'LONG');
+        $('rtBtnShort').classList.toggle('picked', dir === 'SHORT');
+        $('rtBtnGo').disabled = false;
+        $('rtGoText').textContent = dir + ' 진행! →';
+    }
+
+    async rtGo() {
+        if (!GS.rtDirection) return;
+        this.sfx.play('start');
+
+        // Setup game state for this single round
+        GS.totalStages = 1;
+        GS.currentStage = 0;
+        GS.plan = [GS.rtDirection];
+        GS.isRunning = true;
+        GS.entryPrice = 0;
+
+        // HUD for game screen
+        $('hudMode').textContent = '실시간';
+        $('hudStage').textContent = 'ROUND ' + GS.rtRound;
+        this.updateBalance();
+        this.createDots();
+
+        this.showScreen('game');
+        setTimeout(async () => {
+            GS.currentStage = 1;
+            this.updateDots();
+            $('stageFill').style.width = '0%';
+
+            const result = await this.runStage(GS.rtDirection);
+
+            if (result === 'WIN') {
+                this.sfx.play('win');
+                this.gameVis.spawnBurst(true);
+                await this.showResult(true);
+
+                // Show continue modal
+                setTimeout(() => {
+                    const nextBal = GS.balance;
+                    $('rtResultIcon').textContent = '🎉';
+                    $('rtResultTitle').textContent = 'ROUND ' + GS.rtRound + ' CLEAR!';
+                    $('rtResultTitle').className = 'rt-result-title win';
+                    $('rtResultProfit').textContent = '+₩' + Math.round(GS.balance / 2).toLocaleString();
+                    $('rtResultProfit').className = 'rt-result-profit profit';
+                    $('rtResultNext').textContent = '다음 라운드 배팅: ₩' + Math.round(nextBal).toLocaleString();
+                    $('rtBtnContinue').style.display = '';
+                    $('rtResultModal').classList.add('active');
+                }, 1500);
+            } else {
+                this.sfx.play('lose');
+                this.gameVis.spawnBurst(false);
+                await this.showResult(false);
+
+                setTimeout(() => {
+                    $('rtResultIcon').textContent = '💀';
+                    $('rtResultTitle').textContent = 'ROUND ' + GS.rtRound + ' FAILED';
+                    $('rtResultTitle').className = 'rt-result-title lose';
+                    $('rtResultProfit').textContent = '-₩' + Math.round(GS.balance).toLocaleString();
+                    $('rtResultProfit').className = 'rt-result-profit loss';
+                    $('rtResultNext').textContent = '시드 금액을 잃었습니다';
+                    $('rtBtnContinue').style.display = 'none';
+                    $('rtResultModal').classList.add('active');
+                }, 1500);
+            }
+        }, 800);
+    }
+
+    rtContinue() {
+        $('rtResultModal').classList.remove('active');
+        GS.rtRound++;
+        GS.isRunning = false;
+        GS.entryPrice = 0;
+        this.cleanup();
+        document.body.className = '';
+        this.rtUpdateUI();
+        this.showScreen('realtime');
+    }
+
+    rtStop() {
+        $('rtResultModal').classList.remove('active');
+        GS.rtMode = false;
+        GS.isRunning = false;
+        this.cleanup();
+        document.body.className = '';
+
+        if (GS.balance > GS.seed) {
+            // Won - show win screen
+            this.onVictory();
+        } else {
+            this.backToSelect();
+        }
+    }
+
     loop() {
         this.bg.draw(this.grav);
         this.gameVis.draw();

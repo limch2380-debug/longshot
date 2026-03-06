@@ -51,27 +51,56 @@
                 <label>시드 금액</label>
                 <div class="seed-wrap"><span>₩</span><input type="number" id="seedInput" value="10000" min="1000"></div>
             </div>
-            <div class="mode-cards">
-                <div class="mode-card" data-mode="EASY">
-                    <div class="mc-badge easy">EASY</div>
-                    <div class="mc-stages">3<small>STAGES</small></div>
-                    <div class="mc-mult easy">×8</div>
-                    <div class="mc-desc">짧은 호흡의 입문용</div>
-                    <div class="mc-expect" id="easyExp">₩80,000</div>
+            <!-- ★ 실시간 모드 (메인) -->
+            <div class="realtime-card" id="btnRealtime">
+                <div class="rt-glow"></div>
+                <div class="rt-content">
+                    <div class="rt-badge">⚡ LIVE</div>
+                    <h2 class="rt-title">실시간 트레이딩</h2>
+                    <p class="rt-desc">지금 바로 BTC 방향을 예측하세요</p>
+                    <div class="rt-features">
+                        <span class="rt-feat">🎯 1회씩 진행</span>
+                        <span class="rt-feat">💰 성공 시 2배</span>
+                        <span class="rt-feat">♾️ 무한 도전</span>
+                    </div>
+                    <div class="rt-bottom">
+                        <span class="rt-btn-text">게임 시작 →</span>
+                    </div>
                 </div>
-                <div class="mode-card" data-mode="NORMAL">
-                    <div class="mc-badge normal">NORMAL</div>
-                    <div class="mc-stages">5<small>STAGES</small></div>
-                    <div class="mc-mult normal">×32</div>
-                    <div class="mc-desc">트레이딩 중급자</div>
-                    <div class="mc-expect" id="normalExp">₩320,000</div>
+            </div>
+
+            <!-- 예약하기 (3단계 모드) -->
+            <div class="reserve-section">
+                <div class="reserve-header" id="reserveToggle">
+                    <span class="reserve-icon">📋</span>
+                    <span class="reserve-title">예약하기</span>
+                    <span class="reserve-sub">전략을 미리 세우고 한번에 진행</span>
+                    <span class="reserve-arrow" id="reserveArrow">▼</span>
                 </div>
-                <div class="mode-card" data-mode="LEGEND">
-                    <div class="mc-badge legend">LEGEND</div>
-                    <div class="mc-stages">10<small>STAGES</small></div>
-                    <div class="mc-mult legend">×1,024</div>
-                    <div class="mc-desc">0.1% 극한 도전</div>
-                    <div class="mc-expect" id="legendExp">₩10,240,000</div>
+                <div class="reserve-modes" id="reserveModes">
+                    <div class="mode-cards">
+                        <div class="mode-card" data-mode="EASY">
+                            <div class="mc-badge easy">EASY</div>
+                            <div class="mc-stages">3<small>STAGES</small></div>
+                            <div class="mc-mult easy">×8</div>
+                            <div class="mc-desc">짧은 호흡의 입문용</div>
+                            <div class="mc-expect" id="easyExp">₩80,000</div>
+                        </div>
+                        <div class="mode-card" data-mode="NORMAL">
+                            <div class="mc-badge normal">NORMAL</div>
+                            <div class="mc-stages">5<small>STAGES</small></div>
+                            <div class="mc-mult normal">×32</div>
+                            <div class="mc-desc">트레이딩 중급자</div>
+                            <div class="mc-expect" id="normalExp">₩320,000</div>
+                        </div>
+                        <div class="mode-card" data-mode="LEGEND">
+                            <div class="mc-badge legend">LEGEND</div>
+                            <div class="mc-stages">10<small>STAGES</small></div>
+                            <div class="mc-mult legend">×1,024</div>
+                            <div class="mc-desc">0.1% 극한 도전</div>
+                            <div class="mc-expect" id="legendExp">₩10,240,000</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -198,6 +227,73 @@
                 <h2 class="sr-title" id="srTitle">STAGE CLEAR!</h2>
                 <p class="sr-profit" id="srProfit">+₩10,000</p>
                 <p class="sr-next" id="srNext">다음 단계...</p>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ===== REALTIME: 실시간 라운드 선택 ===== -->
+    <div id="screenRealtime" class="screen">
+        <div class="rt-play-container">
+            <div class="rt-play-header">
+                <div class="rt-play-badge">⚡ 실시간</div>
+                <div class="rt-round-info">
+                    <span class="rt-round" id="rtRound">ROUND 1</span>
+                    <span class="rt-balance" id="rtBalance">₩10,000</span>
+                </div>
+            </div>
+            <div class="rt-play-price">
+                <span class="live-dot"></span>
+                <span>BTC/USDT</span>
+                <span class="rt-price" id="rtPrice">$0.00</span>
+                <span class="rt-change" id="rtChange"></span>
+            </div>
+            <div class="rt-choose">
+                <h3 class="rt-choose-title">방향을 선택하세요</h3>
+                <div class="rt-choose-btns">
+                    <button class="rt-dir-btn long" id="rtBtnLong">
+                        <span class="rt-dir-icon">📈</span>
+                        <span class="rt-dir-text">LONG</span>
+                        <span class="rt-dir-sub">상승에 배팅</span>
+                    </button>
+                    <button class="rt-dir-btn short" id="rtBtnShort">
+                        <span class="rt-dir-icon">📉</span>
+                        <span class="rt-dir-text">SHORT</span>
+                        <span class="rt-dir-sub">하락에 배팅</span>
+                    </button>
+                </div>
+                <button class="rt-go-btn" id="rtBtnGo" disabled>
+                    <span id="rtGoText">방향을 선택하세요</span>
+                </button>
+            </div>
+            <!-- Mini Big Road -->
+            <div class="mini-road-section">
+                <div class="mini-road-header">
+                    <span class="mini-road-icon">🎰</span>
+                    <span class="mini-road-title">BTC ROAD MAP</span>
+                    <div class="mini-road-stats">
+                        <span class="mrs long" id="miniLongRT">L:0</span>
+                        <span class="mrs short" id="miniShortRT">S:0</span>
+                    </div>
+                </div>
+                <div class="mini-road-grid-wrap">
+                    <div class="mini-road-grid" id="miniRoadRT"></div>
+                </div>
+                <div class="mini-road-predict" id="miniPredictRT">—</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== REALTIME: 라운드 결과 ===== -->
+    <div id="rtResultModal" class="rt-result-overlay">
+        <div class="rt-result-box">
+            <div class="rt-result-icon" id="rtResultIcon">🎉</div>
+            <h2 class="rt-result-title" id="rtResultTitle">ROUND CLEAR!</h2>
+            <p class="rt-result-profit" id="rtResultProfit">+₩10,000</p>
+            <p class="rt-result-next" id="rtResultNext">다음 라운드 배팅: ₩20,000</p>
+            <div class="rt-result-btns">
+                <button class="rt-continue-btn" id="rtBtnContinue">🔥 계속 도전</button>
+                <button class="rt-stop-btn" id="rtBtnStop">💰 수익 확정</button>
             </div>
         </div>
     </div>
