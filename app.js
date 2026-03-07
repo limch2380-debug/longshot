@@ -198,13 +198,20 @@ class BinanceFutures {
         return this._req('DELETE', '/fapi/v1/allOpenOrders', { symbol: GS.currentSymbol });
     }
 
-    // 포지션 조회
-    async getPosition() {
-        const positions = await this._req('GET', '/fapi/v2/positionRisk', { symbol: GS.currentSymbol });
-        if (Array.isArray(positions)) {
-            return positions.find(p => p.symbol === GS.currentSymbol && parseFloat(p.positionAmt) !== 0);
-        }
-        return null;
+    // 모든 포지션 청산 (시장가)
+    async closeAllPositions() {
+        try {
+            await this.cancelAllOrders();
+            const p = await this.getPosition();
+            if (p && parseFloat(p.positionAmt) !== 0) {
+                const side = parseFloat(p.positionAmt) > 0 ? 'SELL' : 'BUY';
+                const qty = Math.abs(parseFloat(p.positionAmt)).toFixed(3);
+                await this._req('POST', '/fapi/v1/order', {
+                    symbol: GS.currentSymbol, side, type: 'MARKET', quantity: qty,
+                    reduceOnly: 'true'
+                });
+            }
+        } catch (e) { console.error('Close positions failed:', e); }
     }
 }
 
@@ -653,6 +660,9 @@ class Game {
         this.grav = -0.3;
         this.priceCheckInterval = null;
         this.burstTimer = null;
+        this.state = 'LOBBY';
+        this.isReal = false;
+        this.bindGlobalEvents();
 
         // Top Mover coin selection
         const hasSaved = this.topMover.loadSaved();
@@ -769,6 +779,37 @@ class Game {
         if (GS.currentUser) {
             this.auth.saveState(GS.currentUser, GS);
         }
+    }
+
+    bindGlobalEvents() {
+        const qp = $('btnQuitPlan'); if (qp) qp.onclick = () => this.stopGameAndExit();
+        const qr = $('btnQuitRT'); if (qr) qr.onclick = () => this.stopGameAndExit();
+        const qg = $('btnQuitGame'); if (qg) qg.onclick = () => {
+            if (confirm('현재 진행 중인 게임을 종료하시겠습니까? (실전의 경우 모든 포지션이 시장가로 청산됩니다)')) {
+                this.stopGameAndExit();
+            }
+        };
+    }
+
+    async stopGameAndExit() {
+        if (this.priceCheckInterval) clearInterval(this.priceCheckInterval);
+        this.priceCheckInterval = null;
+        if (this.burstTimer) clearInterval(this.burstTimer);
+        this.burstTimer = null;
+
+        if (this.isReal) {
+            try {
+                await this.futures.closeAllPositions();
+                GS.binanceOrderId = null;
+                console.log('✅ Real position closed by user quit');
+            } catch (e) { console.error('Failed to close position on quit:', e); }
+        }
+
+        this.state = 'LOBBY';
+        this.isReal = false;
+        switchScreen('lobby');
+        this.sfx.play('click');
+        console.log('🚪 Back to lobby');
     }
 
     // -- PRICE --

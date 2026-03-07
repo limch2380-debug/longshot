@@ -197,11 +197,14 @@ body {
     z-index: 10;
     overflow-y: auto;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    padding: 60px 20px;
     opacity: 0;
     visibility: hidden;
-    transition: opacity .5s, visibility .5s
+    transition: opacity .5s, visibility .5s;
+    box-sizing: border-box;
 }
 
 .screen.active {
@@ -597,11 +600,12 @@ body {
 .plan-container {
     max-width: 800px;
     width: 100%;
-    padding: 30px 20px 40px;
-    text-align: center;
+    padding: 80px 20px 40px;
+    /* Increased top padding to clear the absolute Back button */
     position: relative;
-    z-index: 2
+    z-index: 2;
 }
+
 
 .plan-header {
     margin-bottom: 20px
@@ -804,8 +808,10 @@ body {
     transform: translateX(-50%);
     width: 100%;
     max-width: 920px;
-    z-index: 20;
-    padding: 24px 40px 0;
+    z-index: 100;
+    /* Ensure it is above almost everything */
+    padding: 15px 100px 0 30px;
+    /* Increased padding-right to provide safe space for Chart Toggle */
     box-sizing: border-box;
 }
 
@@ -817,7 +823,8 @@ body {
 }
 
 .hud-cell {
-    min-width: 150px
+    min-width: 80px;
+    flex: 1;
 }
 
 .hud-cell.center {
@@ -825,7 +832,11 @@ body {
 }
 
 .hud-cell.right {
-    text-align: right
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
 }
 
 .hud-label {
@@ -2770,4 +2781,45 @@ a.bac-toggle {
         right: 0px !important;
         padding-bottom: env(safe-area-inset-bottom, 12px);
     }
+}
+
+/* Quit & Back Buttons - Premium Visibility */
+.btn-quit-accent {
+    background: #ff3246;
+    /* Solid background for guaranteed visibility */
+    border: 1px solid #ff4d4d;
+    color: white;
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(255, 50, 70, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    z-index: 1001;
+    /* Extremely high z-index */
+    white-space: nowrap;
+}
+
+.btn-quit-accent:hover {
+    background: #ff4d4d;
+    box-shadow: 0 6px 25px rgba(255, 50, 70, 0.7);
+    transform: translateY(-2px) scale(1.02);
+}
+
+.btn-quit-accent:active {
+    transform: translateY(1px);
+}
+
+.btn-quit-small {
+    position: absolute;
+    top: 25px;
+    left: 25px;
+}
+
+.btn-quit-hud {
+    margin-bottom: 5px;
+    /* Adjust spacing in HUD column */
 }
