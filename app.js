@@ -807,7 +807,8 @@ class Game {
 
         this.state = 'LOBBY';
         this.isReal = false;
-        switchScreen('lobby');
+        this.showScreen('select');
+
         this.sfx.play('click');
         console.log('🚪 Back to lobby');
     }
