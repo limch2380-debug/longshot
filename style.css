@@ -2316,16 +2316,13 @@ body.state-critical .game-visual {
     align-items: center;
     gap: 8px;
     padding: 12px 16px;
-    cursor: pointer;
     border-radius: 12px;
-    background: rgba(100, 100, 180, .06);
-    border: 1px solid rgba(100, 100, 180, .1);
-    transition: all .3s
+    background: rgba(100, 100, 180, .08);
+    border: 1px solid rgba(100, 100, 180, .15);
 }
 
-.reserve-header:hover {
-    background: rgba(100, 100, 180, .12)
-}
+/* No hover effect once it's solid */
+
 
 .reserve-icon {
     font-size: 16px
@@ -2354,14 +2351,10 @@ body.state-critical .game-visual {
 }
 
 .reserve-modes {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height .4s ease
+    display: block;
+    width: 100%;
 }
 
-.reserve-modes.open {
-    max-height: 600px
-}
 
 .reserve-modes .mode-cards {
     margin-top: 12px

@@ -953,11 +953,7 @@ class Game {
 
         // Realtime mode
         $('btnRealtime').addEventListener('click', () => this.startRealtime());
-        $('reserveToggle').addEventListener('click', () => {
-            const m = $('reserveModes');
-            m.classList.toggle('open');
-            $('reserveArrow').textContent = m.classList.contains('open') ? '▲' : '▼';
-        });
+
         $('rtBtnLong').addEventListener('click', () => this.rtPickDir('LONG'));
         $('rtBtnShort').addEventListener('click', () => this.rtPickDir('SHORT'));
         $('rtBtnGo').addEventListener('click', () => this.rtGo());
