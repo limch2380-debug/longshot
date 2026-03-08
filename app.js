@@ -402,7 +402,7 @@ class TopMover {
             // Filter only active USDT pairs with volume
             const usdt = tickers
                 .filter(t => t.symbol.endsWith('USDT') && activeSymbols.has(t.symbol) && parseFloat(t.quoteVolume) > 10000000)
-                .sort((a, b) => Math.abs(parseFloat(b.priceChangePercent)) - Math.abs(parseFloat(a.priceChangePercent)));
+                .sort((a, b) => parseFloat(b.priceChangePercent) - parseFloat(a.priceChangePercent));
             if (usdt.length > 0) {
                 this.coinData = usdt[0];
                 return this.coinData;
