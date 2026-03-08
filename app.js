@@ -705,7 +705,7 @@ class Game {
     }
 
     // -- AUTH FLOW --
-    handleLogin() {
+    async handleLogin() {
         const id = $('loginId').value.trim();
         const pw = $('loginPw').value.trim();
         const res = this.auth.login(id, pw);
@@ -723,12 +723,20 @@ class Game {
                 GS.plan = s.plan || [];
                 GS.rtRound = s.rtRound || 0;
                 GS.isRunning = s.isRunning || false;
-                if (s.currentSymbol) {
+
+                // Only restore coin if mid-game, otherwise we want fresh Top Gainer
+                if (GS.isRunning && s.currentSymbol) {
                     GS.currentSymbol = s.currentSymbol;
                     GS.currentCoinName = s.currentCoinName;
                     GS.maxLeverage = s.maxLeverage;
                 }
             }
+
+            // If not mid-game, ensure we have the absolute latest top gainer
+            if (!GS.isRunning) {
+                await this.topMover.selectCoin();
+            }
+
 
             // Save/Clear credentials for "Remember Me"
             if ($('saveLogin').checked) {
