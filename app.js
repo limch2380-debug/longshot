@@ -1396,13 +1396,20 @@ class Game {
             }
         }, 800);
     }
-    rtContinue() {
+    async rtContinue() {
         $('rtResultModal').classList.remove('active');
         GS.rtRound++;
         GS.isRunning = false;
         GS.entryPrice = 0;
         this.cleanup();
         document.body.className = '';
+
+        // 로또급 등락률 1위 코인 다시 검색
+        const coin = await this.topMover.selectCoin();
+        if (coin) {
+            this.feed.connect(GS.currentSymbol);
+        }
+
         this.rtUpdateUI();
         this.showScreen('realtime');
     }
