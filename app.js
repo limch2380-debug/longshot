@@ -664,29 +664,22 @@ class Game {
         this.isReal = false;
         this.bindGlobalEvents();
 
-        // Top Mover coin selection
-        const hasSaved = this.topMover.loadSaved();
-        if (hasSaved) {
-            console.log('📌 저장된 코인 로드:', GS.currentCoinName, 'x' + GS.maxLeverage);
-            this.topMover.updateUI({ priceChangePercent: '0', symbol: GS.currentSymbol }, GS.maxLeverage);
-            this.feed.connect(GS.currentSymbol);
-        } else {
-            this.topMover.selectCoin().then(coin => {
-                if (coin) {
-                    console.log('🔥 24H Top Mover:', GS.currentCoinName, '+' + coin.priceChangePercent + '%', 'x' + GS.maxLeverage);
-                    this.feed.connect(GS.currentSymbol);
-                } else {
-                    console.log('⚠️ TopMover fetch failed, fallback to BTC/USDT');
-                    GS.currentSymbol = 'BTCUSDT';
-                    GS.currentCoinName = 'BTC/USDT';
-                    GS.maxLeverage = 100;
-                    CFG.LEV = 100;
-                    CFG.TP = 1; CFG.SL = 1;
-                    this.topMover.updateUI({ priceChangePercent: '0', symbol: 'BTCUSDT' }, 100);
-                    this.feed.connect('BTCUSDT'); // fallback
-                }
-            });
-        }
+        // Always fetch fresh Top Mover (disabled cache for the focus on 'current' top gainer)
+        this.topMover.selectCoin().then(coin => {
+            if (coin) {
+                console.log('🔥 24H Top Gainer selected:', GS.currentCoinName, '+' + coin.priceChangePercent + '%', 'x' + GS.maxLeverage);
+                this.feed.connect(GS.currentSymbol);
+            } else {
+                console.log('⚠️ TopMover fetch failed, fallback to BTC/USDT');
+                GS.currentSymbol = 'BTCUSDT';
+                GS.currentCoinName = 'BTC/USDT';
+                GS.maxLeverage = 100;
+                CFG.LEV = 100;
+                CFG.TP = 1; CFG.SL = 1;
+                this.topMover.updateUI({ priceChangePercent: '0', symbol: 'BTCUSDT' }, 100);
+                this.feed.connect('BTCUSDT'); // fallback
+            }
+        });
         this.topMover.startAutoRefresh();
 
         // Sync Baccarat threshold with current session leverage
