@@ -465,7 +465,7 @@ class TopMover {
         const base = GS.currentCoinName;
         const chg = parseFloat(coin.priceChangePercent).toFixed(2);
         // Update all symbol labels
-        const ts = $('tickerSymbol'); if (ts) ts.innerHTML = base + ' <span class="top-mover-badge">🔥 24H TOP <span class="top-mover-change">' + (chg > 0 ? '+' : '') + chg + '%</span></span>';
+        const ts = $('tickerSymbol'); if (ts) ts.textContent = base;
         const hs = $('hudSymbol'); if (hs) hs.textContent = base;
         const hl = $('hudLev'); if (hl) hl.textContent = 'x' + maxLev;
         const rs = $('rtSymbol'); if (rs) rs.textContent = base;
@@ -820,8 +820,10 @@ class Game {
         // Ticker
         const tp = $('tickerPrice'); if (tp) tp.textContent = '$' + d.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const ce = $('tickerChange');
-        ce.textContent = (d.change >= 0 ? '+' : '') + d.change.toFixed(2) + '%';
-        ce.className = 'ticker-change ' + (d.change >= 0 ? 'up' : 'down');
+        if (ce) {
+            ce.textContent = (d.change >= 0 ? '+' : '') + d.change.toFixed(2) + '%';
+            ce.className = 'ticker-change ' + (d.change >= 0 ? 'up' : 'down');
+        }
 
         // Realtime price
         if (screens.realtime && screens.realtime.classList.contains('active')) {
